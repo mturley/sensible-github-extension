@@ -45,7 +45,7 @@ const ICON_STYLES = `
   :host {
     display: inline-flex;
     align-items: center;
-    margin-left: 4px;
+    margin-right: 4px;
     vertical-align: middle;
     line-height: 0;
   }
@@ -57,10 +57,16 @@ const ICON_STYLES = `
 `;
 
 export function injectLoadingIcon(anchor: HTMLAnchorElement): HTMLElement {
-  const existing = anchor.parentElement?.querySelector(`.${ICON_CLASS}`);
-  if (existing) return existing as HTMLElement;
+  const existingId = anchor.dataset.prinfoIconId;
+  if (existingId) {
+    const existing = document.getElementById(existingId);
+    if (existing) return existing;
+  }
 
   const host = document.createElement("span");
+  const hostId = `prinfo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  host.id = hostId;
+  anchor.dataset.prinfoIconId = hostId;
   host.className = ICON_CLASS;
   const shadow = host.attachShadow({ mode: "open" });
 
@@ -73,7 +79,7 @@ export function injectLoadingIcon(anchor: HTMLAnchorElement): HTMLElement {
   container.innerHTML = createLoadingPlaceholder();
   shadow.appendChild(container);
 
-  anchor.after(host);
+  anchor.before(host);
   return host;
 }
 
@@ -92,7 +98,11 @@ export function removeIcon(host: HTMLElement): void {
 }
 
 export function getIconHost(anchor: HTMLAnchorElement): HTMLElement | null {
-  return anchor.parentElement?.querySelector(`.${ICON_CLASS}`) ?? null;
+  const existingId = anchor.dataset.prinfoIconId;
+  if (existingId) {
+    return document.getElementById(existingId);
+  }
+  return null;
 }
 
 export function removeAllIcons(): void {

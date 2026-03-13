@@ -1,4 +1,5 @@
 import type { PRData, BackgroundMessage, BackgroundResponse } from "@/services/github/types";
+import type { TooltipState } from "./tooltip";
 import { findPRLinks, prCacheKey } from "@/utils/pr-url-parser";
 import { injectLoadingIcon, updateIcon, removeAllIcons } from "./icon-injector";
 import { setupTooltipListeners, updateTooltipContent, hideActiveTooltip } from "./tooltip";
@@ -8,10 +9,37 @@ const HOVER_REVALIDATE_TTL = 60_000; // 1 minute
 const processed = new Set<HTMLAnchorElement>();
 const prHosts = new Map<string, HTMLElement[]>();
 const prDataCache = new Map<string, PRData>();
+const prErrors = new Map<string, string>();
 const pendingRequests = new Set<string>();
+let hasToken: boolean | null = null;
 
 async function sendMessage(message: BackgroundMessage): Promise<BackgroundResponse> {
   return browser.runtime.sendMessage(message);
+}
+
+async function checkToken(): Promise<boolean> {
+  if (hasToken !== null) return hasToken;
+  try {
+    const response = await sendMessage({ type: "getConfig" });
+    if (response.type === "config") {
+      hasToken = !!response.config.pat;
+    } else {
+      hasToken = false;
+    }
+  } catch {
+    hasToken = false;
+  }
+  return hasToken;
+}
+
+function getTooltipState(key: string): TooltipState {
+  const data = prDataCache.get(key);
+  if (data) return { type: "data", data };
+  if (hasToken === false) return { type: "no-token" };
+  const error = prErrors.get(key);
+  if (error) return { type: "error", message: error };
+  if (pendingRequests.has(key)) return { type: "loading" };
+  return { type: "loading" };
 }
 
 async function fetchAndDecorate(
@@ -28,18 +56,19 @@ async function fetchAndDecorate(
     const response = await sendMessage({ type: "fetchPR", owner, repo, number });
     if (response.type === "prData") {
       prDataCache.set(key, response.data);
+      prErrors.delete(key);
       for (const host of hosts) {
         updateIcon(host, response.data);
       }
     } else if (response.type === "error") {
-      for (const host of hosts) {
-        host.remove();
+      if (response.message === "GitHub token required") {
+        hasToken = false;
+      } else {
+        prErrors.set(key, response.message);
       }
     }
-  } catch {
-    for (const host of hosts) {
-      host.remove();
-    }
+  } catch (err) {
+    prErrors.set(key, err instanceof Error ? err.message : "Unknown error");
   } finally {
     pendingRequests.delete(key);
   }
@@ -72,8 +101,11 @@ async function revalidateOnHover(owner: string, repo: string, number: number): P
   }
 }
 
-function processAnchors(root: Element | Document): void {
+async function processAnchors(root: Element | Document): Promise<void> {
   const links = findPRLinks(root);
+  if (links.length === 0) return;
+
+  await checkToken();
 
   for (const { element, link } of links) {
     if (processed.has(element)) continue;
@@ -89,14 +121,14 @@ function processAnchors(root: Element | Document): void {
 
     setupTooltipListeners(
       element,
-      () => prDataCache.get(key),
+      () => getTooltipState(key),
       () => revalidateOnHover(link.owner, link.repo, link.number)
     );
 
     const cached = prDataCache.get(key);
     if (cached) {
       updateIcon(host, cached);
-    } else if (!pendingRequests.has(key)) {
+    } else if (hasToken && !pendingRequests.has(key)) {
       fetchAndDecorate(link.owner, link.repo, link.number, prHosts.get(key)!);
     }
   }
@@ -120,7 +152,7 @@ export default defineContentScript({
   matches: ["<all_urls>"],
   excludeMatches: ["*://github.com/*"],
   async main() {
-    processAnchors(document);
+    await processAnchors(document);
     observeMutations();
 
     browser.runtime.onMessage.addListener((message: { type: string }) => {
@@ -130,8 +162,15 @@ export default defineContentScript({
         processed.clear();
         prHosts.clear();
         prDataCache.clear();
+        prErrors.clear();
       }
       if (message.type === "siteEnabled") {
+        processAnchors(document);
+      }
+      if (message.type === "configChanged") {
+        hasToken = null;
+        processed.clear();
+        prErrors.clear();
         processAnchors(document);
       }
     });

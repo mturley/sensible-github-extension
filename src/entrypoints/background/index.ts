@@ -10,18 +10,16 @@ import {
   setSiteEnabled,
   setTokenError,
 } from "@/services/storage";
-
 const inflight = new Map<string, Promise<PRData>>();
-const MIN_REQUEST_INTERVAL = 500; // ms between requests
-let lastRequestTime = 0;
+const MIN_REQUEST_INTERVAL = 200; // ms between requests
+let requestQueue: Promise<void> = Promise.resolve();
 
-async function throttle(): Promise<void> {
-  const now = Date.now();
-  const wait = MIN_REQUEST_INTERVAL - (now - lastRequestTime);
-  if (wait > 0) {
-    await new Promise((resolve) => setTimeout(resolve, wait));
-  }
-  lastRequestTime = Date.now();
+function throttle(): Promise<void> {
+  const ticket = requestQueue.then(
+    () => new Promise<void>((resolve) => setTimeout(resolve, MIN_REQUEST_INTERVAL))
+  );
+  requestQueue = ticket;
+  return ticket;
 }
 
 function cacheKey(owner: string, repo: string, number: number): string {
@@ -49,7 +47,6 @@ async function fetchPR(
       const client = await createClient();
       const data = await client.fetchPR(owner, repo, number);
       setCached(data);
-      await setTokenError(false);
       return data;
     } catch (error) {
       if (
@@ -57,12 +54,6 @@ async function fetchPR(
         (error.message.includes("401") || error.message.includes("403"))
       ) {
         await setTokenError(true);
-        const { RestClient } = await import("@/services/github/rest-client");
-        const restClient = new RestClient();
-        await throttle();
-        const data = await restClient.fetchPR(owner, repo, number);
-        setCached(data);
-        return data;
       }
       throw error;
     } finally {
@@ -107,10 +98,17 @@ export default defineBackground(() => {
       }
 
       if (message.type === "configChanged") {
-        return Promise.resolve<BackgroundResponse>({
-          type: "config",
-          config: { pat: null, globalEnabled: true },
+        // Broadcast to all content scripts so they re-check token state
+        browser.tabs.query({}).then((tabs) => {
+          for (const tab of tabs) {
+            if (tab.id) {
+              browser.tabs.sendMessage(tab.id, { type: "configChanged" }).catch(() => {});
+            }
+          }
         });
+        return getConfig().then(
+          (config): BackgroundResponse => ({ type: "config", config })
+        );
       }
 
       return undefined;

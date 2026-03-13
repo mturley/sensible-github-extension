@@ -1,30 +1,45 @@
 const ALGORITHM = "AES-GCM";
 const KEY_LENGTH = 256;
 const IV_LENGTH = 12;
+const STORAGE_KEY = "local:prinfo_encryption_key";
+
+let cachedKey: CryptoKey | null = null;
 
 async function getEncryptionKey(): Promise<CryptoKey> {
-  const keyMaterial = new TextEncoder().encode(
-    "pr-info-extension-storage-key-v1"
+  if (cachedKey) return cachedKey;
+
+  const stored = await storage.getItem<string>(STORAGE_KEY);
+
+  if (stored) {
+    const rawKey = new Uint8Array(
+      atob(stored)
+        .split("")
+        .map((c) => c.charCodeAt(0))
+    );
+    cachedKey = await crypto.subtle.importKey(
+      "raw",
+      rawKey,
+      { name: ALGORITHM, length: KEY_LENGTH },
+      false,
+      ["encrypt", "decrypt"]
+    );
+    return cachedKey;
+  }
+
+  // First install: generate a random key and persist it
+  const rawKey = crypto.getRandomValues(new Uint8Array(KEY_LENGTH / 8));
+  await storage.setItem(
+    STORAGE_KEY,
+    btoa(String.fromCharCode(...rawKey))
   );
-  const baseKey = await crypto.subtle.importKey(
+  cachedKey = await crypto.subtle.importKey(
     "raw",
-    keyMaterial,
-    "PBKDF2",
-    false,
-    ["deriveKey"]
-  );
-  return crypto.subtle.deriveKey(
-    {
-      name: "PBKDF2",
-      salt: new TextEncoder().encode("pr-info-salt"),
-      iterations: 100000,
-      hash: "SHA-256",
-    },
-    baseKey,
+    rawKey,
     { name: ALGORITHM, length: KEY_LENGTH },
     false,
     ["encrypt", "decrypt"]
   );
+  return cachedKey;
 }
 
 export async function encrypt(plaintext: string): Promise<string> {

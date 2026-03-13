@@ -315,17 +315,69 @@ export function isTooltipVisible(): boolean {
   return activeTooltip !== null;
 }
 
+export type TooltipState =
+  | { type: "data"; data: PRData }
+  | { type: "loading" }
+  | { type: "no-token" }
+  | { type: "error"; message: string };
+
+function renderMessageContent(message: string, detail?: string): string {
+  let html = `<div class="tooltip"><div class="tooltip-meta" style="margin-bottom:0">${escapeHtml(message)}</div>`;
+  if (detail) {
+    html += `<div class="tooltip-meta" style="margin-bottom:0;margin-top:4px">${escapeHtml(detail)}</div>`;
+  }
+  html += `</div>`;
+  return html;
+}
+
+export function createMessageTooltip(state: TooltipState, anchor: HTMLElement): HTMLElement {
+  if (state.type === "data") {
+    return createTooltip(state.data, anchor);
+  }
+
+  hideActiveTooltip();
+
+  const host = document.createElement("div");
+  host.className = TOOLTIP_CLASS;
+  const shadow = host.attachShadow({ mode: "open" });
+
+  const style = document.createElement("style");
+  style.textContent = TOOLTIP_STYLES;
+  shadow.appendChild(style);
+
+  const content = document.createElement("div");
+  if (state.type === "no-token") {
+    content.innerHTML = renderMessageContent(
+      "GitHub token required",
+      "Click the PR Info extension icon to add your token."
+    );
+  } else if (state.type === "loading") {
+    content.innerHTML = renderMessageContent("Loading PR data...");
+  } else {
+    content.innerHTML = renderMessageContent("Failed to load PR data", state.message);
+  }
+  shadow.appendChild(content);
+
+  document.body.appendChild(host);
+  const rect = anchor.getBoundingClientRect();
+  positionTooltip(host, rect);
+
+  host.addEventListener("mouseenter", () => cancelHide());
+  host.addEventListener("mouseleave", () => scheduleHide());
+
+  activeTooltip = host;
+  return host;
+}
+
 export function setupTooltipListeners(
   anchor: HTMLAnchorElement,
-  getData: () => PRData | undefined,
+  getState: () => TooltipState,
   onHover?: () => void
 ): void {
   anchor.addEventListener("mouseenter", () => {
     cancelHide();
-    const data = getData();
-    if (data) {
-      createTooltip(data, anchor);
-    }
+    const state = getState();
+    createMessageTooltip(state, anchor);
     onHover?.();
   });
 

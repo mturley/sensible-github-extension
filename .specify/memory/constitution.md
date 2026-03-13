@@ -1,50 +1,89 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+Sync Impact Report
+- Version change: N/A → 1.0.0 (initial ratification)
+- Added principles: I. Cross-Browser Compatibility, II. Minimal Permissions,
+  III. Non-Intrusive UI, IV. Privacy-First, V. Graceful Degradation
+- Added sections: Technology Constraints, Development Workflow
+- Templates requiring updates:
+  - .specify/templates/plan-template.md ✅ no changes needed (generic)
+  - .specify/templates/spec-template.md ✅ no changes needed (generic)
+  - .specify/templates/tasks-template.md ✅ no changes needed (generic)
+  - README.md ✅ no changes needed
+- Follow-up TODOs: none
+-->
+
+# PR Info Extension Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Cross-Browser Compatibility
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+The extension MUST work on both Chrome (Manifest V3) and Firefox.
+Shared logic MUST be browser-agnostic; browser-specific code MUST be
+isolated behind a platform abstraction layer. Every feature MUST be
+tested on both browsers before it is considered complete.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### II. Minimal Permissions
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+The extension MUST request only the permissions it needs to function.
+Host permissions MUST be scoped as narrowly as possible — prefer
+`activeTab` or specific match patterns over broad `<all_urls>` access.
+Any new permission MUST be justified in the PR description.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### III. Non-Intrusive UI
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+Injected UI elements MUST NOT break the layout or functionality of the
+host page. Styles MUST be scoped (e.g., Shadow DOM or namespaced CSS)
+to prevent leaking into or inheriting from the host page. The extension
+MUST provide a way for users to dismiss or disable overlays on any site.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### IV. Privacy-First
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+The extension MUST NOT collect telemetry or analytics. Network requests
+MUST go only to the GitHub API (or a user-configured GitHub Enterprise
+instance) and nowhere else. User tokens MUST be stored using the
+browser's secure storage API and MUST NOT be logged or transmitted to
+third parties.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+### V. Graceful Degradation
+
+The extension MUST handle GitHub API failures, rate limits, and missing
+data without crashing or producing uncaught errors. When PR data is
+unavailable, the extension MUST fall back to showing the plain link
+with no visual disruption. Unauthenticated users MUST still see public
+PR information where the API allows it.
+
+## Technology Constraints
+
+- **Extension APIs**: WebExtensions API (cross-browser baseline);
+  Chrome-specific APIs permitted only behind the platform abstraction.
+- **Manifest**: Manifest V3 for Chrome; Manifest V2 or V3 for Firefox
+  as supported.
+- **Build tooling**: A single build pipeline MUST produce artifacts for
+  both browsers.
+- **Dependencies**: Minimize runtime dependencies. Prefer native
+  browser APIs over third-party libraries. Any added dependency MUST be
+  justified by significant complexity reduction.
+
+## Development Workflow
+
+- All changes require a PR with at least a self-review before merging.
+- Commit messages MUST be descriptive and reference relevant context.
+- Lint and type-check (if applicable) MUST pass before a PR is merged.
+- Manual smoke testing on both Chrome and Firefox is required for UI
+  changes until automated cross-browser tests are in place.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution defines the non-negotiable standards for the PR Info
+Extension project. All PRs and code reviews MUST verify compliance with
+these principles. Amendments require updating this file, incrementing
+the version, and documenting the change in the Sync Impact Report at
+the top of this document.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+Versioning follows semver:
+- **MAJOR**: Principle removed or fundamentally redefined.
+- **MINOR**: New principle or section added, or material expansion.
+- **PATCH**: Wording clarifications, typo fixes, non-semantic changes.
+
+**Version**: 1.0.0 | **Ratified**: 2026-03-13 | **Last Amended**: 2026-03-13

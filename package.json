@@ -1,0 +1,25 @@
+{
+  "name": "pr-info-extension",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Browser extension that surfaces GitHub PR info inline on other websites",
+  "type": "module",
+  "scripts": {
+    "dev": "wxt",
+    "dev:firefox": "wxt -b firefox",
+    "build": "wxt build",
+    "build:firefox": "wxt build -b firefox",
+    "build:all": "wxt build && wxt build -b firefox",
+    "zip": "wxt zip",
+    "zip:firefox": "wxt zip -b firefox"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mturley/pr-info-extension.git"
+  },
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "wxt": "^0.20.18"
+  }
+}

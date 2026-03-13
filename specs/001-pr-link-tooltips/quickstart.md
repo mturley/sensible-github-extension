@@ -6,7 +6,7 @@
 ## Prerequisites
 
 - Node.js 20+ (LTS)
-- npm or pnpm
+- npm
 - Chrome and/or Firefox (for manual testing)
 
 ## Setup
@@ -15,7 +15,6 @@
 # Clone and enter the project
 git clone https://github.com/mturley/pr-info-extension.git
 cd pr-info-extension
-git checkout 001-pr-link-tooltips
 
 # Install dependencies
 npm install
@@ -44,22 +43,13 @@ npm run build:firefox
 
 # Build for both
 npm run build:all
+
+# Create distributable zip files
+npm run zip
+npm run zip:firefox
 ```
 
-Build output goes to `.output/chrome-mv3/` and `.output/firefox-mv2/` (or `-mv3` depending on Firefox target).
-
-## Test
-
-```bash
-# Unit tests
-npm test
-
-# Unit tests in watch mode
-npm run test:watch
-
-# Integration tests (requires Chrome and Firefox installed)
-npm run test:integration
-```
+Build output goes to `.output/chrome-mv3/` and `.output/firefox-mv2/`.
 
 ## Load Extension Manually
 
@@ -86,13 +76,13 @@ npm run test:integration
 ```
 src/
 ├── entrypoints/          # WXT entrypoints (content, background, popup)
+│   ├── background/       # Service worker for API calls and caching
+│   ├── content/          # Content script, icon injector, tooltip
+│   └── popup/            # Browser action popup with settings
 ├── services/             # Business logic (GitHub API, cache, storage)
+│   └── github/           # REST client, GraphQL client, types, queries
 ├── utils/                # Pure utility functions
 └── assets/               # Static assets (icons)
-
-tests/
-├── unit/                 # Vitest unit tests
-└── integration/          # Playwright cross-browser tests
 
 specs/                    # Feature specifications and planning docs
 ```
@@ -100,4 +90,4 @@ specs/                    # Feature specifications and planning docs
 ## Key Configuration
 
 - **No token needed**: The extension works out of the box for public repos using the unauthenticated GitHub REST API (60 requests/hour)
-- **Optional PAT**: Click the extension icon > Settings > enter a GitHub Personal Access Token for higher rate limits (5,000/hour) and private repo support
+- **Optional PAT**: Click the extension icon > enter a GitHub Personal Access Token for higher rate limits (5,000/hour) and private repo support

@@ -17,11 +17,11 @@
 
 **Purpose**: Initialize WXT project, configure TypeScript, install dependencies
 
-- [ ] T001 Initialize WXT project with TypeScript and install dependencies (wxt, webextension-polyfill, @types/webextension-polyfill) in package.json
-- [ ] T002 Configure TypeScript strict mode in tsconfig.json
-- [ ] T003 [P] Configure ESLint and Prettier for TypeScript in .eslintrc and .prettierrc
-- [ ] T004 [P] Create extension icons (16, 32, 48, 128px) in src/assets/icons/
-- [ ] T005 Configure WXT for dual-browser builds (Chrome MV3 + Firefox) in wxt.config.ts
+- [x] T001 Initialize WXT project with TypeScript and install dependencies (wxt, webextension-polyfill, @types/webextension-polyfill) in package.json
+- [x] T002 Configure TypeScript strict mode in tsconfig.json
+- [x] T003 [P] Configure ESLint and Prettier for TypeScript in .eslintrc and .prettierrc
+- [x] T004 [P] Create extension icons (16, 32, 48, 128px) in src/assets/icons/
+- [x] T005 Configure WXT for dual-browser builds (Chrome MV3 + Firefox) in wxt.config.ts
 
 ---
 
@@ -29,18 +29,18 @@
 
 **Purpose**: Core infrastructure that MUST be complete before ANY user story can be implemented
 
-- [ ] T006 Define shared TypeScript types (PRLink, PRData, ReviewEntry, CommentPreview, CacheEntry, SitePreference, UserConfig) in src/services/github/types.ts
-- [ ] T007 [P] Implement PR URL parser — detect and extract owner/repo/number from GitHub PR link hrefs, ignore non-PR URLs and github.com host check in src/utils/pr-url-parser.ts
-- [ ] T008 [P] Implement relative time formatter (e.g., "2 hours ago", "3 days ago") in src/utils/relative-time.ts
-- [ ] T009 [P] Implement AES-GCM encrypt/decrypt utilities using Web Crypto API in src/utils/crypto.ts
-- [ ] T010 Implement storage service — read/write UserConfig (with PAT encryption) and SitePreference map to browser.storage.local in src/services/storage.ts
-- [ ] T011 Implement two-tier cache manager — in-memory cache with 5-minute page-load TTL and 1-minute hover stale-while-revalidate threshold in src/services/cache.ts
-- [ ] T012 Define GitHub API client interface (fetchPR method returning PRData) in src/services/github/client.ts
-- [ ] T013 Implement unauthenticated REST client — 4 calls per PR (pulls, reviews, check-runs, comments), normalize response to PRData shape in src/services/github/rest-client.ts
-- [ ] T014 [P] Define GraphQL query for PR data (metadata, reviews with commit OID, CI status, latest comment) in src/services/github/queries.ts
-- [ ] T015 Implement authenticated GraphQL client — single query per PR, normalize response to PRData shape, fallback to REST on auth failure in src/services/github/graphql-client.ts
-- [ ] T016 Implement client factory in src/services/github/client.ts — returns REST or GraphQL client based on whether a PAT is configured in storage
-- [ ] T017 Implement background service worker — handle messages from content script (fetch PR data via client, return cached or fresh PRData), manage rate limiting and request throttling in src/entrypoints/background/index.ts
+- [x] T006 Define shared TypeScript types (PRLink, PRData, ReviewEntry, CommentPreview, CacheEntry, SitePreference, UserConfig) in src/services/github/types.ts
+- [x] T007 [P] Implement PR URL parser — detect and extract owner/repo/number from GitHub PR link hrefs, ignore non-PR URLs and github.com host check in src/utils/pr-url-parser.ts
+- [x] T008 [P] Implement relative time formatter (e.g., "2 hours ago", "3 days ago") in src/utils/relative-time.ts
+- [x] T009 [P] Implement AES-GCM encrypt/decrypt utilities using Web Crypto API in src/utils/crypto.ts
+- [x] T010 Implement storage service — read/write UserConfig (with PAT encryption) and SitePreference map to browser.storage.local in src/services/storage.ts
+- [x] T011 Implement two-tier cache manager — in-memory cache with 5-minute page-load TTL and 1-minute hover stale-while-revalidate threshold in src/services/cache.ts
+- [x] T012 Define GitHub API client interface (fetchPR method returning PRData) in src/services/github/client.ts
+- [x] T013 Implement unauthenticated REST client — 4 calls per PR (pulls, reviews, check-runs, comments), normalize response to PRData shape in src/services/github/rest-client.ts
+- [x] T014 [P] Define GraphQL query for PR data (metadata, reviews with commit OID, CI status, latest comment) in src/services/github/queries.ts
+- [x] T015 Implement authenticated GraphQL client — single query per PR, normalize response to PRData shape, fallback to REST on auth failure in src/services/github/graphql-client.ts
+- [x] T016 Implement client factory in src/services/github/client.ts — returns REST or GraphQL client based on whether a PAT is configured in storage
+- [x] T017 Implement background service worker — handle messages from content script (fetch PR data via client, return cached or fresh PRData), manage rate limiting and request throttling in src/entrypoints/background/index.ts
 
 **Checkpoint**: Foundation ready — all shared services, API clients, and background worker operational. User story implementation can now begin.
 
@@ -54,11 +54,11 @@
 
 ### Implementation for User Story 1
 
-- [ ] T018 [US1] Implement content script entry point — on page load, check if current page is github.com (skip if so), check site preference (skip if disabled), scan DOM for PR links using pr-url-parser, send fetch requests to background worker for each unique PR in src/entrypoints/content/index.ts
-- [ ] T019 [US1] Implement DOM mutation observer in src/entrypoints/content/index.ts — watch for dynamically added anchor elements, detect new PR links, trigger fetch for any not already processed
-- [ ] T020 [US1] Implement icon injector — create Shadow DOM host element next to each PR link, render loading placeholder (gray dot), replace with colored state icon (open/merged/closed/draft) when PRData arrives, handle error state (remove placeholder silently) in src/entrypoints/content/icon-injector.ts
-- [ ] T021 [US1] Wire content script to background worker — send PR link data via browser.runtime.sendMessage, receive PRData response, pass to icon injector for rendering in src/entrypoints/content/index.ts
-- [ ] T022 [US1] Handle page-load cache integration — before sending fetch message to background, check if cache has fresh data (< 5 min) and use it directly; deduplicate requests for the same PR across multiple links in src/entrypoints/content/index.ts
+- [x] T018 [US1] Implement content script entry point — on page load, check if current page is github.com (skip if so), check site preference (skip if disabled), scan DOM for PR links using pr-url-parser, send fetch requests to background worker for each unique PR in src/entrypoints/content/index.ts
+- [x] T019 [US1] Implement DOM mutation observer in src/entrypoints/content/index.ts — watch for dynamically added anchor elements, detect new PR links, trigger fetch for any not already processed
+- [x] T020 [US1] Implement icon injector — create Shadow DOM host element next to each PR link, render loading placeholder (gray dot), replace with colored state icon (open/merged/closed/draft) when PRData arrives, handle error state (remove placeholder silently) in src/entrypoints/content/icon-injector.ts
+- [x] T021 [US1] Wire content script to background worker — send PR link data via browser.runtime.sendMessage, receive PRData response, pass to icon injector for rendering in src/entrypoints/content/index.ts
+- [x] T022 [US1] Handle page-load cache integration — before sending fetch message to background, check if cache has fresh data (< 5 min) and use it directly; deduplicate requests for the same PR across multiple links in src/entrypoints/content/index.ts
 
 **Checkpoint**: User Story 1 complete — PR links on non-GitHub pages show colored status icons. Extension does nothing on github.com. Private repo links silently show no icon (without token). Loading placeholders prevent layout shift.
 
@@ -72,11 +72,11 @@
 
 ### Implementation for User Story 2
 
-- [ ] T023 [US2] Implement tooltip component — create Shadow DOM container, render PR metadata (title, number, author, repo, state icon, CI status indicator, created/updated relative timestamps), reviewer summary section, and latest comment preview (3 lines with ellipsis) in src/entrypoints/content/tooltip.ts
-- [ ] T024 [US2] Implement tooltip positioning — position tooltip near the hovered link, ensure it stays within viewport bounds, handle edge cases (link near page edges) in src/entrypoints/content/tooltip.ts
-- [ ] T025 [US2] Implement tooltip show/hide logic — show on mouseenter of PR link or icon, hide on mouseleave of both link and tooltip (with small delay to allow moving to tooltip), prevent multiple tooltips from appearing simultaneously in src/entrypoints/content/tooltip.ts
-- [ ] T026 [US2] Implement stale-while-revalidate on hover — when tooltip opens, if cached data is older than 1 minute, show cached data immediately and send background refresh request; when fresh data arrives, update tooltip content and icon in place if data changed in src/entrypoints/content/index.ts
-- [ ] T027 [US2] Style the tooltip — neutral design with scoped CSS inside Shadow DOM, CI status indicators (green checkmark, red X, yellow dot), reviewer state badges, comment preview section with author and relative timestamp in src/entrypoints/content/tooltip.ts
+- [x] T023 [US2] Implement tooltip component — create Shadow DOM container, render PR metadata (title, number, author, repo, state icon, CI status indicator, created/updated relative timestamps), reviewer summary section, and latest comment preview (3 lines with ellipsis) in src/entrypoints/content/tooltip.ts
+- [x] T024 [US2] Implement tooltip positioning — position tooltip near the hovered link, ensure it stays within viewport bounds, handle edge cases (link near page edges) in src/entrypoints/content/tooltip.ts
+- [x] T025 [US2] Implement tooltip show/hide logic — show on mouseenter of PR link or icon, hide on mouseleave of both link and tooltip (with small delay to allow moving to tooltip), prevent multiple tooltips from appearing simultaneously in src/entrypoints/content/tooltip.ts
+- [x] T026 [US2] Implement stale-while-revalidate on hover — when tooltip opens, if cached data is older than 1 minute, show cached data immediately and send background refresh request; when fresh data arrives, update tooltip content and icon in place if data changed in src/entrypoints/content/index.ts
+- [x] T027 [US2] Style the tooltip — neutral design with scoped CSS inside Shadow DOM, CI status indicators (green checkmark, red X, yellow dot), reviewer state badges, comment preview section with author and relative timestamp in src/entrypoints/content/tooltip.ts
 
 **Checkpoint**: User Story 2 complete — hovering over PR links shows a detailed tooltip. Stale-while-revalidate refreshes data in background. Tooltip styling is isolated from host page.
 
@@ -90,9 +90,9 @@
 
 ### Implementation for User Story 3
 
-- [ ] T028 [US3] Implement review staleness computation — for each ReviewEntry, compare commitSha against PRData.headSha to derive isStale flag in src/services/review-staleness.ts
-- [ ] T029 [US3] Enhance tooltip reviewer section — show each reviewer's name, review state (approved/changes_requested/commented), relative timestamp, and staleness indicator (dimmed or warning badge for stale reviews) in src/entrypoints/content/tooltip.ts
-- [ ] T030 [US3] Handle multiple reviews per reviewer — show the most recent review per reviewer in the summary view, with staleness computed against that most recent review in src/services/review-staleness.ts
+- [x] T028 [US3] Implement review staleness computation — for each ReviewEntry, compare commitSha against PRData.headSha to derive isStale flag in src/services/review-staleness.ts
+- [x] T029 [US3] Enhance tooltip reviewer section — show each reviewer's name, review state (approved/changes_requested/commented), relative timestamp, and staleness indicator (dimmed or warning badge for stale reviews) in src/entrypoints/content/tooltip.ts
+- [x] T030 [US3] Handle multiple reviews per reviewer — show the most recent review per reviewer in the summary view, with staleness computed against that most recent review in src/services/review-staleness.ts
 
 **Checkpoint**: User Story 3 complete — tooltip shows per-reviewer staleness. Stale reviews are visually distinguished from current reviews.
 
@@ -106,13 +106,13 @@
 
 ### Implementation for User Story 4
 
-- [ ] T031 [US4] Create popup HTML structure with current site status display and enable/disable toggle in src/entrypoints/popup/index.html
-- [ ] T032 [US4] Implement popup logic — read current tab URL, look up site preference, toggle enabled/disabled state, persist to storage, send message to content script to add/remove icons immediately in src/entrypoints/popup/index.ts
-- [ ] T033 [US4] Implement settings page — PAT input field (masked), save/clear PAT buttons, site exclusion list management in src/entrypoints/popup/settings.ts
-- [ ] T034 [US4] Implement PAT validation — on save, attempt a lightweight GitHub API call to verify token validity, show success/error feedback in src/entrypoints/popup/settings.ts
-- [ ] T035 [US4] Implement invalid token indicator — when background worker detects auth failure, store a flag; popup reads flag and shows non-intrusive warning that the token needs attention in src/entrypoints/popup/index.ts
-- [ ] T036 [US4] Wire popup toggle to content script — when user disables extension for a site, send message to content script to remove all injected icons and tooltips from the page immediately in src/entrypoints/content/index.ts
-- [ ] T037 [US4] Style popup and settings — clean, minimal UI scoped to popup HTML, consistent with extension icon design in src/entrypoints/popup/index.html
+- [x] T031 [US4] Create popup HTML structure with current site status display and enable/disable toggle in src/entrypoints/popup/index.html
+- [x] T032 [US4] Implement popup logic — read current tab URL, look up site preference, toggle enabled/disabled state, persist to storage, send message to content script to add/remove icons immediately in src/entrypoints/popup/index.ts
+- [x] T033 [US4] Implement settings page (integrated into popup) — PAT input field (masked), save/clear PAT buttons, site exclusion list management in src/entrypoints/popup/settings.ts
+- [x] T034 [US4] Implement PAT validation — on save, attempt a lightweight GitHub API call to verify token validity, show success/error feedback in src/entrypoints/popup/settings.ts
+- [x] T035 [US4] Implement invalid token indicator — when background worker detects auth failure, store a flag; popup reads flag and shows non-intrusive warning that the token needs attention in src/entrypoints/popup/index.ts
+- [x] T036 [US4] Wire popup toggle to content script — when user disables extension for a site, send message to content script to remove all injected icons and tooltips from the page immediately in src/entrypoints/content/index.ts
+- [x] T037 [US4] Style popup and settings — clean, minimal UI scoped to popup HTML, consistent with extension icon design in src/entrypoints/popup/index.html
 
 **Checkpoint**: User Story 4 complete — popup shows per-site toggle, settings allow PAT configuration. Token validation provides feedback. Invalid token triggers fallback with warning.
 
@@ -122,12 +122,12 @@
 
 **Purpose**: Final improvements that affect multiple user stories
 
-- [ ] T038 [P] Verify extension builds and loads correctly on Chrome (Manifest V3)
-- [ ] T039 [P] Verify extension builds and loads correctly on Firefox
+- [x] T038 [P] Verify extension builds and loads correctly on Chrome (Manifest V3)
+- [x] T039 [P] Verify extension builds and loads correctly on Firefox
 - [ ] T040 Manual smoke test on both browsers — test all 4 user stories end-to-end
-- [ ] T041 [P] Update README.md with installation instructions, feature overview, and development setup
-- [ ] T042 Review and update quickstart.md with actual npm scripts and verified commands in specs/001-pr-link-tooltips/quickstart.md
-- [ ] T043 Audit rate limiting behavior — verify throttling works correctly with unauthenticated API on a page with many PR links
+- [x] T041 [P] Update README.md with installation instructions, feature overview, and development setup
+- [x] T042 Review and update quickstart.md with actual npm scripts and verified commands in specs/001-pr-link-tooltips/quickstart.md
+- [x] T043 Audit rate limiting behavior — verify throttling works correctly with unauthenticated API on a page with many PR links
 
 ---
 

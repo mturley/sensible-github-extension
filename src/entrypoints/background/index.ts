@@ -1,0 +1,119 @@
+import type {
+  BackgroundMessage,
+  BackgroundResponse,
+  PRData,
+} from "@/services/github/types";
+import { createClient } from "@/services/github/client";
+import { getCached, setCached, isFreshForPageLoad } from "@/services/cache";
+import {
+  getConfig,
+  setSiteEnabled,
+  setTokenError,
+} from "@/services/storage";
+
+const inflight = new Map<string, Promise<PRData>>();
+const MIN_REQUEST_INTERVAL = 500; // ms between requests
+let lastRequestTime = 0;
+
+async function throttle(): Promise<void> {
+  const now = Date.now();
+  const wait = MIN_REQUEST_INTERVAL - (now - lastRequestTime);
+  if (wait > 0) {
+    await new Promise((resolve) => setTimeout(resolve, wait));
+  }
+  lastRequestTime = Date.now();
+}
+
+function cacheKey(owner: string, repo: string, number: number): string {
+  return `${owner}/${repo}/${number}`;
+}
+
+async function fetchPR(
+  owner: string,
+  repo: string,
+  number: number
+): Promise<PRData> {
+  const key = cacheKey(owner, repo, number);
+
+  const cached = getCached(owner, repo, number);
+  if (cached && isFreshForPageLoad(cached)) {
+    return cached.data;
+  }
+
+  const existing = inflight.get(key);
+  if (existing) return existing;
+
+  const promise = (async () => {
+    try {
+      await throttle();
+      const client = await createClient();
+      const data = await client.fetchPR(owner, repo, number);
+      setCached(data);
+      await setTokenError(false);
+      return data;
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        (error.message.includes("401") || error.message.includes("403"))
+      ) {
+        await setTokenError(true);
+        const { RestClient } = await import("@/services/github/rest-client");
+        const restClient = new RestClient();
+        await throttle();
+        const data = await restClient.fetchPR(owner, repo, number);
+        setCached(data);
+        return data;
+      }
+      throw error;
+    } finally {
+      inflight.delete(key);
+    }
+  })();
+
+  inflight.set(key, promise);
+  return promise;
+}
+
+export default defineBackground(() => {
+  browser.runtime.onMessage.addListener(
+    (
+      message: BackgroundMessage,
+      _sender: browser.Runtime.MessageSender
+    ): Promise<BackgroundResponse> | undefined => {
+      if (message.type === "fetchPR") {
+        return fetchPR(message.owner, message.repo, message.number)
+          .then((data): BackgroundResponse => ({ type: "prData", data }))
+          .catch(
+            (err): BackgroundResponse => ({
+              type: "error",
+              message: err instanceof Error ? err.message : String(err),
+            })
+          );
+      }
+
+      if (message.type === "toggleSite") {
+        return setSiteEnabled(message.hostname, message.enabled).then(
+          (): BackgroundResponse => ({
+            type: "config",
+            config: { pat: null, globalEnabled: true },
+          })
+        );
+      }
+
+      if (message.type === "getConfig") {
+        return getConfig().then(
+          (config): BackgroundResponse => ({ type: "config", config })
+        );
+      }
+
+      if (message.type === "configChanged") {
+        return Promise.resolve<BackgroundResponse>({
+          type: "config",
+          config: { pat: null, globalEnabled: true },
+        });
+      }
+
+      return undefined;
+    }
+  );
+});

@@ -69,7 +69,7 @@ export default defineBackground(() => {
   browser.runtime.onMessage.addListener(
     (
       message: BackgroundMessage,
-      _sender: browser.Runtime.MessageSender
+      _sender: Browser.runtime.MessageSender
     ): Promise<BackgroundResponse> | undefined => {
       if (message.type === "fetchPR") {
         return fetchPR(message.owner, message.repo, message.number)

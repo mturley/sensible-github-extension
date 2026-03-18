@@ -105,6 +105,17 @@ export function getIconHost(anchor: HTMLAnchorElement): HTMLElement | null {
   return null;
 }
 
+export function hasExistingNearbyIcon(anchor: HTMLAnchorElement): boolean {
+  let el = anchor.previousElementSibling;
+  while (el) {
+    if (el.classList.contains(ICON_CLASS)) {
+      return true;
+    }
+    el = el.previousElementSibling;
+  }
+  return false;
+}
+
 export function removeAllIcons(): void {
   document.querySelectorAll(`.${ICON_CLASS}`).forEach((el) => el.remove());
 }

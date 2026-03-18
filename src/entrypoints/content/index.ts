@@ -1,7 +1,7 @@
 import type { PRData, BackgroundMessage, BackgroundResponse } from "@/services/github/types";
 import type { TooltipState } from "./tooltip";
 import { findPRLinks, prCacheKey } from "@/utils/pr-url-parser";
-import { injectLoadingIcon, updateIcon, removeAllIcons } from "./icon-injector";
+import { injectLoadingIcon, updateIcon, removeAllIcons, hasExistingNearbyIcon } from "./icon-injector";
 import { setupTooltipListeners, updateTooltipContent, hideActiveTooltip } from "./tooltip";
 
 const HOVER_REVALIDATE_TTL = 60_000; // 1 minute
@@ -112,25 +112,28 @@ async function processAnchors(root: Element | Document): Promise<void> {
     processed.add(element);
 
     const key = prCacheKey(link.owner, link.repo, link.number);
-    const host = injectLoadingIcon(element);
 
     if (!prHosts.has(key)) {
       prHosts.set(key, []);
     }
-    prHosts.get(key)!.push(host);
+
+    if (!hasExistingNearbyIcon(element)) {
+      const host = injectLoadingIcon(element);
+      prHosts.get(key)!.push(host);
+
+      const cached = prDataCache.get(key);
+      if (cached) {
+        updateIcon(host, cached);
+      } else if (hasToken && !pendingRequests.has(key)) {
+        fetchAndDecorate(link.owner, link.repo, link.number, prHosts.get(key)!);
+      }
+    }
 
     setupTooltipListeners(
       element,
       () => getTooltipState(key),
       () => revalidateOnHover(link.owner, link.repo, link.number)
     );
-
-    const cached = prDataCache.get(key);
-    if (cached) {
-      updateIcon(host, cached);
-    } else if (hasToken && !pendingRequests.has(key)) {
-      fetchAndDecorate(link.owner, link.repo, link.number, prHosts.get(key)!);
-    }
   }
 }
 

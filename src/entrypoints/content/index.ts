@@ -1,7 +1,7 @@
 import type { PRData, BackgroundMessage, BackgroundResponse } from "@/services/github/types";
 import type { TooltipState } from "./tooltip";
 import { findPRLinks, prCacheKey } from "@/utils/pr-url-parser";
-import { injectLoadingIcon, updateIcon, removeAllIcons, hasExistingNearbyIcon } from "./icon-injector";
+import { injectLoadingIcon, updateIcon, removeAllIcons, hasExistingNearbyIcon, cleanupOrphanedIcons } from "./icon-injector";
 import { setupTooltipListeners, updateTooltipContent, hideActiveTooltip } from "./tooltip";
 
 const HOVER_REVALIDATE_TTL = 60_000; // 1 minute
@@ -140,6 +140,16 @@ async function processAnchors(root: Element | Document): Promise<void> {
 function observeMutations(): void {
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
+      for (const node of mutation.removedNodes) {
+        if (node instanceof HTMLElement) {
+          cleanupOrphanedIcons(node);
+          if (node.dataset?.prinfoIconId) {
+            const iconId = node.dataset.prinfoIconId;
+            document.getElementById(iconId)?.remove();
+            processed.delete(node as HTMLAnchorElement);
+          }
+        }
+      }
       for (const node of mutation.addedNodes) {
         if (node instanceof HTMLElement) {
           processAnchors(node);

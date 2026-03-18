@@ -106,6 +106,7 @@ export function getIconHost(anchor: HTMLAnchorElement): HTMLElement | null {
 }
 
 export function hasExistingNearbyIcon(anchor: HTMLAnchorElement): boolean {
+  // Check previous siblings at the same DOM level
   let el = anchor.previousElementSibling;
   while (el) {
     if (el.classList.contains(ICON_CLASS)) {
@@ -113,7 +114,21 @@ export function hasExistingNearbyIcon(anchor: HTMLAnchorElement): boolean {
     }
     el = el.previousElementSibling;
   }
+  // Check ancestor boundary containers (e.g. Jira web link list items)
+  const boundary = anchor.closest("li, tr, article, [role='listitem']");
+  if (boundary?.querySelector(`.${ICON_CLASS}`)) {
+    return true;
+  }
   return false;
+}
+
+export function cleanupOrphanedIcons(root: Element): void {
+  root.querySelectorAll<HTMLAnchorElement>("[data-prinfo-icon-id]").forEach((anchor) => {
+    const iconId = anchor.dataset.prinfoIconId!;
+    const icon = document.getElementById(iconId);
+    if (icon) icon.remove();
+    delete anchor.dataset.prinfoIconId;
+  });
 }
 
 export function removeAllIcons(): void {

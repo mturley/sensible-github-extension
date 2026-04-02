@@ -24,7 +24,7 @@ function applyPrefix(): void {
     recentAttempts.push(now);
 
     if (recentAttempts.length >= THRASH_MAX_ATTEMPTS) {
-      console.warn("[pr-info] Title prefix thrashing detected, abandoning updates for this tab.");
+      console.warn("[sensible-github] Title prefix thrashing detected, abandoning updates for this tab.");
       abandoned = true;
       return;
     }

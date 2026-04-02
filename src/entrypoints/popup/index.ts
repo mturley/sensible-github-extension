@@ -109,7 +109,7 @@ async function init() {
     await setTokenError(false);
     patInput.value = "";
     patInput.placeholder = "ghp_...";
-    patStatus.textContent = "Token cleared — PR Info is disabled without a token";
+    patStatus.textContent = "Token cleared — Sensible GitHub is disabled without a token";
     patStatus.className = "pat-status error";
     updateTokenState(false, false);
 

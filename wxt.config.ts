@@ -3,7 +3,7 @@ import { defineConfig } from "wxt";
 export default defineConfig({
   srcDir: "src",
   manifest: {
-    name: "PR Info",
+    name: "Sensible GitHub",
     description:
       "See GitHub PR status, reviews, and details inline on any website",
     permissions: ["activeTab", "storage"],
@@ -16,7 +16,7 @@ export default defineConfig({
     },
     browser_specific_settings: {
       gecko: {
-        id: "pr-info@mturley",
+        id: "sensible-github@mturley",
       },
     },
   },

@@ -13,8 +13,8 @@
 
 ```bash
 # Clone and enter the project
-git clone https://github.com/mturley/pr-info-extension.git
-cd pr-info-extension
+git clone https://github.com/mturley/sensible-github-extension.git
+cd sensible-github-extension
 
 # Install dependencies
 npm install

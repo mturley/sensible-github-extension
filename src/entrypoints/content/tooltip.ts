@@ -348,7 +348,7 @@ export function createMessageTooltip(state: TooltipState, anchor: HTMLElement): 
   if (state.type === "no-token") {
     content.innerHTML = renderMessageContent(
       "GitHub token required",
-      "Click the PR Info extension icon to add your token."
+      "Click the Sensible GitHub extension icon to add your token."
     );
   } else if (state.type === "loading") {
     content.innerHTML = renderMessageContent("Loading PR data...");

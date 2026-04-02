@@ -1,5 +1,5 @@
 {
-  "name": "pr-info-extension",
+  "name": "sensible-github-extension",
   "version": "1.0.0",
   "private": true,
   "description": "Browser extension that surfaces GitHub PR info inline on other websites",
@@ -15,7 +15,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mturley/pr-info-extension.git"
+    "url": "git+https://github.com/mturley/sensible-github-extension.git"
   },
   "license": "ISC",
   "devDependencies": {

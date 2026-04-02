@@ -12,7 +12,7 @@ Sync Impact Report
 - Follow-up TODOs: none
 -->
 
-# PR Info Extension Constitution
+# Sensible GitHub Extension Constitution
 
 ## Core Principles
 

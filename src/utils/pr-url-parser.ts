@@ -27,10 +27,15 @@ export function prCacheKey(owner: string, repo: string, number: number): string 
   return `${owner}/${repo}/${number}`;
 }
 
+function isInsideEditable(el: Element): boolean {
+  return el.closest("[contenteditable='true'], [contenteditable='']") !== null;
+}
+
 export function findPRLinks(root: Element | Document): { element: HTMLAnchorElement; link: PRLink }[] {
   const anchors = root.querySelectorAll<HTMLAnchorElement>("a[href]");
   const results: { element: HTMLAnchorElement; link: PRLink }[] = [];
   for (const anchor of anchors) {
+    if (isInsideEditable(anchor)) continue;
     const link = parsePRUrl(anchor.href);
     if (link) {
       results.push({ element: anchor, link });

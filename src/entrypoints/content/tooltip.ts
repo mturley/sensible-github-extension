@@ -15,17 +15,17 @@ const TOOLTIP_STYLES = `
     pointer-events: auto;
   }
   .tooltip {
-    background: #ffffff;
-    border: 1px solid #d0d7de;
+    background: #161b22;
+    border: 1px solid #30363d;
     border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
     padding: 12px 16px;
     max-width: 420px;
     min-width: 280px;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
     font-size: 13px;
     line-height: 1.5;
-    color: #1f2328;
+    color: #e6edf3;
     pointer-events: auto;
   }
   .tooltip-header {
@@ -37,15 +37,15 @@ const TOOLTIP_STYLES = `
   .tooltip-title {
     font-weight: 600;
     font-size: 14px;
-    color: #1f2328;
+    color: #e6edf3;
     word-break: break-word;
   }
   .tooltip-number {
-    color: #656d76;
+    color: #8b949e;
     font-weight: 400;
   }
   .tooltip-meta {
-    color: #656d76;
+    color: #8b949e;
     font-size: 12px;
     margin-bottom: 8px;
   }
@@ -76,9 +76,9 @@ const TOOLTIP_STYLES = `
   .ci-success { color: #1a7f37; }
   .ci-failure { color: #cf222e; }
   .ci-pending { color: #bf8700; }
-  .ci-none { color: #656d76; }
+  .ci-none { color: #8b949e; }
   .section {
-    border-top: 1px solid #d8dee4;
+    border-top: 1px solid #30363d;
     padding-top: 8px;
     margin-top: 8px;
   }
@@ -86,7 +86,7 @@ const TOOLTIP_STYLES = `
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
-    color: #656d76;
+    color: #8b949e;
     margin-bottom: 4px;
   }
   .reviewer {
@@ -103,11 +103,11 @@ const TOOLTIP_STYLES = `
     font-size: 11px;
     font-weight: 500;
   }
-  .review-approved { background: #dafbe1; color: #116329; }
-  .review-changes { background: #fff1e5; color: #953800; }
-  .review-commented { background: #ddf4ff; color: #0969da; }
-  .review-dismissed { background: #eaeef2; color: #656d76; }
-  .review-pending { background: #fff8c5; color: #6a5d00; }
+  .review-approved { background: #1b4721; color: #3fb950; }
+  .review-changes { background: #462c16; color: #d29922; }
+  .review-commented { background: #12283e; color: #58a6ff; }
+  .review-dismissed { background: #21262d; color: #8b949e; }
+  .review-pending { background: #3b2e00; color: #d29922; }
   .review-stale {
     opacity: 0.5;
   }
@@ -118,7 +118,7 @@ const TOOLTIP_STYLES = `
   }
   .comment-preview {
     font-size: 12px;
-    color: #1f2328;
+    color: #e6edf3;
   }
   .comment-author {
     font-weight: 600;
@@ -126,11 +126,11 @@ const TOOLTIP_STYLES = `
   .comment-body {
     white-space: pre-wrap;
     word-break: break-word;
-    color: #656d76;
+    color: #8b949e;
     margin-top: 2px;
   }
   .comment-time {
-    color: #656d76;
+    color: #8b949e;
     font-size: 11px;
   }
 `;
@@ -270,8 +270,7 @@ export function createTooltip(data: PRData, anchor: HTMLElement): HTMLElement {
   const rect = anchor.getBoundingClientRect();
   positionTooltip(host, rect);
 
-  host.addEventListener("mouseenter", () => cancelHide());
-  host.addEventListener("mouseleave", () => scheduleHide());
+  host.addEventListener("mouseenter", () => hideActiveTooltip());
 
   activeTooltip = host;
   return host;
@@ -362,8 +361,7 @@ export function createMessageTooltip(state: TooltipState, anchor: HTMLElement): 
   const rect = anchor.getBoundingClientRect();
   positionTooltip(host, rect);
 
-  host.addEventListener("mouseenter", () => cancelHide());
-  host.addEventListener("mouseleave", () => scheduleHide());
+  host.addEventListener("mouseenter", () => hideActiveTooltip());
 
   activeTooltip = host;
   return host;
@@ -375,6 +373,7 @@ export function setupTooltipListeners(
   onHover?: () => void
 ): void {
   anchor.addEventListener("mouseenter", () => {
+    if (anchor.isContentEditable) return;
     cancelHide();
     const state = getState();
     createMessageTooltip(state, anchor);

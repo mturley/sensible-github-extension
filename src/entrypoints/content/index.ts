@@ -155,10 +155,28 @@ function observeMutations(): void {
           processAnchors(node);
         }
       }
+
+      if (mutation.type === "attributes" && mutation.target instanceof HTMLElement) {
+        handleContentEditableChange(mutation.target);
+      }
     }
   });
 
-  observer.observe(document.body, { childList: true, subtree: true });
+  observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["contenteditable"] });
+}
+
+function handleContentEditableChange(target: HTMLElement): void {
+  if (target.isContentEditable) {
+    // Became editable — remove all injected icons and un-track anchors
+    hideActiveTooltip();
+    cleanupOrphanedIcons(target);
+    target.querySelectorAll<HTMLAnchorElement>("a[data-prinfo-icon-id]").forEach((anchor) => {
+      processed.delete(anchor);
+    });
+  } else {
+    // No longer editable — re-process to pick up new/existing links
+    processAnchors(target);
+  }
 }
 
 export default defineContentScript({

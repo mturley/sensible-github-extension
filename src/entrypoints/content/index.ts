@@ -163,7 +163,7 @@ function observeMutations(): void {
 
 export default defineContentScript({
   matches: ["<all_urls>"],
-  excludeMatches: ["*://github.com/*"],
+  excludeMatches: ["*://github.com/*", "*://localhost/*", "*://127.0.0.1/*", "*://[::1]/*"],
   async main() {
     await processAnchors(document);
     observeMutations();

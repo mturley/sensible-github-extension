@@ -4,3 +4,7 @@ dist/
 .wxt/
 *.log
 .DS_Store
+.env
+.env.*
+!.env.example
+web-ext-artifacts/

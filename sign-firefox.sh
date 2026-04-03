@@ -79,7 +79,7 @@ echo "Signing version $new_version on the $channel channel..."
 echo ""
 
 npx web-ext sign \
-  --source-dir=.output/firefox-mv3 \
+  --source-dir=.output/firefox-mv2 \
   --channel="$channel" \
   --api-key="$WEB_EXT_API_KEY" \
   --api-secret="$WEB_EXT_API_SECRET" \

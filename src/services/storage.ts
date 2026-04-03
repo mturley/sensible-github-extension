@@ -74,3 +74,75 @@ export async function getTokenError(): Promise<boolean> {
     return false;
   }
 }
+
+// --- Bot usernames ---
+
+const BOT_USERNAMES_KEY = "sensible_bot_usernames";
+const HIDE_BOTS_KEY = "sensible_hide_bots";
+
+import { DEFAULT_BOT_USERNAMES } from "@/utils/bot-detection";
+
+export async function getBotUsernames(): Promise<string[]> {
+  const result = await storage.getItem<string>(`local:${BOT_USERNAMES_KEY}`);
+  if (!result) return [...DEFAULT_BOT_USERNAMES];
+  try {
+    return JSON.parse(result);
+  } catch {
+    return [...DEFAULT_BOT_USERNAMES];
+  }
+}
+
+export async function setBotUsernames(usernames: string[]): Promise<void> {
+  await storage.setItem(`local:${BOT_USERNAMES_KEY}`, JSON.stringify(usernames));
+}
+
+export async function resetBotUsernames(): Promise<void> {
+  await storage.removeItem(`local:${BOT_USERNAMES_KEY}`);
+}
+
+export async function getHideBotsEnabled(): Promise<boolean> {
+  const result = await storage.getItem<string>(`local:${HIDE_BOTS_KEY}`);
+  if (!result) return false;
+  try {
+    return JSON.parse(result);
+  } catch {
+    return false;
+  }
+}
+
+export async function setHideBotsEnabled(enabled: boolean): Promise<void> {
+  await storage.setItem(`local:${HIDE_BOTS_KEY}`, JSON.stringify(enabled));
+}
+
+// --- Feature toggles ---
+
+const PR_TOOLTIPS_KEY = "sensible_pr_tooltips_enabled";
+const PR_TAB_TITLE_KEY = "sensible_pr_tab_title_enabled";
+
+export async function getPrTooltipsEnabled(): Promise<boolean> {
+  const result = await storage.getItem<string>(`local:${PR_TOOLTIPS_KEY}`);
+  if (!result) return true; // default enabled
+  try {
+    return JSON.parse(result);
+  } catch {
+    return true;
+  }
+}
+
+export async function setPrTooltipsEnabled(enabled: boolean): Promise<void> {
+  await storage.setItem(`local:${PR_TOOLTIPS_KEY}`, JSON.stringify(enabled));
+}
+
+export async function getPrTabTitleEnabled(): Promise<boolean> {
+  const result = await storage.getItem<string>(`local:${PR_TAB_TITLE_KEY}`);
+  if (!result) return true; // default enabled
+  try {
+    return JSON.parse(result);
+  } catch {
+    return true;
+  }
+}
+
+export async function setPrTabTitleEnabled(enabled: boolean): Promise<void> {
+  await storage.setItem(`local:${PR_TAB_TITLE_KEY}`, JSON.stringify(enabled));
+}

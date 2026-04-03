@@ -3,6 +3,7 @@ import type { TooltipState } from "./tooltip";
 import { findPRLinks, prCacheKey } from "@/utils/pr-url-parser";
 import { injectLoadingIcon, updateIcon, removeAllIcons, hasExistingNearbyIcon, cleanupOrphanedIcons } from "./icon-injector";
 import { setupTooltipListeners, updateTooltipContent, hideActiveTooltip } from "./tooltip";
+import { getPrTooltipsEnabled } from "@/services/storage";
 
 const HOVER_REVALIDATE_TTL = 60_000; // 1 minute
 
@@ -102,6 +103,8 @@ async function revalidateOnHover(owner: string, repo: string, number: number): P
 }
 
 async function processAnchors(root: Element | Document): Promise<void> {
+  if (!await getPrTooltipsEnabled()) return;
+
   const links = findPRLinks(root);
   if (links.length === 0) return;
 
@@ -202,7 +205,16 @@ export default defineContentScript({
         hasToken = null;
         processed.clear();
         prErrors.clear();
-        processAnchors(document);
+        getPrTooltipsEnabled().then((enabled) => {
+          if (enabled) {
+            processAnchors(document);
+          } else {
+            hideActiveTooltip();
+            removeAllIcons();
+            prHosts.clear();
+            prDataCache.clear();
+          }
+        });
       }
     });
   },

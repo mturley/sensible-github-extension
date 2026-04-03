@@ -5,8 +5,21 @@ import {
   setSiteEnabled,
   getTokenError,
   setTokenError,
+  getBotUsernames,
+  setBotUsernames,
+  resetBotUsernames,
+  getPrTooltipsEnabled,
+  setPrTooltipsEnabled,
+  getHideBotsEnabled,
+  setHideBotsEnabled,
+  getPrTabTitleEnabled,
+  setPrTabTitleEnabled,
 } from "@/services/storage";
+import { DEFAULT_BOT_USERNAMES } from "@/utils/bot-detection";
 
+// PR Tooltips elements
+const prTooltipsToggle = document.getElementById("prTooltipsToggle") as HTMLInputElement;
+const prTooltipsBody = document.getElementById("prTooltipsBody") as HTMLDivElement;
 const siteNameEl = document.getElementById("siteName") as HTMLDivElement;
 const siteToggle = document.getElementById("siteToggle") as HTMLInputElement;
 const tokenRequired = document.getElementById("tokenRequired") as HTMLDivElement;
@@ -15,6 +28,19 @@ const patInput = document.getElementById("patInput") as HTMLInputElement;
 const savePatBtn = document.getElementById("savePat") as HTMLButtonElement;
 const clearPatBtn = document.getElementById("clearPat") as HTMLButtonElement;
 const patStatus = document.getElementById("patStatus") as HTMLDivElement;
+
+// Hide Bot Comments elements
+const hideBotToggle = document.getElementById("hideBotToggle") as HTMLInputElement;
+const hideBotBody = document.getElementById("hideBotBody") as HTMLDivElement;
+const botUsernamesTextarea = document.getElementById("botUsernames") as HTMLTextAreaElement;
+const saveBotsBtn = document.getElementById("saveBots") as HTMLButtonElement;
+const resetBotsBtn = document.getElementById("resetBots") as HTMLButtonElement;
+const botStatus = document.getElementById("botStatus") as HTMLDivElement;
+
+// PR Tab Title elements
+const prTabTitleToggle = document.getElementById("prTabTitleToggle") as HTMLInputElement;
+
+// Not available
 const notAvailable = document.getElementById("notAvailable") as HTMLDivElement;
 
 let currentHostname: string | null = null;
@@ -24,13 +50,19 @@ function updateTokenState(hasPat: boolean, hasError: boolean) {
   tokenWarning.classList.toggle("visible", hasPat && hasError);
 }
 
+function updateFeatureBody(toggle: HTMLInputElement, body: HTMLDivElement) {
+  body.hidden = !toggle.checked;
+}
+
 async function init() {
   const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
   const url = tab?.url;
 
   if (!url || url.startsWith("chrome://") || url.startsWith("about:")) {
     notAvailable.style.display = "block";
-    siteToggle.parentElement!.parentElement!.parentElement!.style.display = "none";
+    document.getElementById("prTooltipsSection")!.style.display = "none";
+    document.getElementById("hideBotSection")!.style.display = "none";
+    document.getElementById("prTabTitleSection")!.style.display = "none";
     return;
   }
 
@@ -42,6 +74,36 @@ async function init() {
     notAvailable.style.display = "block";
     return;
   }
+
+  // --- Feature toggles ---
+
+  const prTooltipsEnabled = await getPrTooltipsEnabled();
+  prTooltipsToggle.checked = prTooltipsEnabled;
+  updateFeatureBody(prTooltipsToggle, prTooltipsBody);
+
+  prTooltipsToggle.addEventListener("change", async () => {
+    await setPrTooltipsEnabled(prTooltipsToggle.checked);
+    updateFeatureBody(prTooltipsToggle, prTooltipsBody);
+    browser.runtime.sendMessage({ type: "configChanged" });
+  });
+
+  const hideBotsEnabled = await getHideBotsEnabled();
+  hideBotToggle.checked = hideBotsEnabled;
+  updateFeatureBody(hideBotToggle, hideBotBody);
+
+  hideBotToggle.addEventListener("change", async () => {
+    await setHideBotsEnabled(hideBotToggle.checked);
+    updateFeatureBody(hideBotToggle, hideBotBody);
+  });
+
+  const prTabTitleEnabled = await getPrTabTitleEnabled();
+  prTabTitleToggle.checked = prTabTitleEnabled;
+
+  prTabTitleToggle.addEventListener("change", async () => {
+    await setPrTabTitleEnabled(prTabTitleToggle.checked);
+  });
+
+  // --- Site toggle (PR Tooltips) ---
 
   const enabled = await isSiteEnabled(currentHostname);
   siteToggle.checked = enabled;
@@ -57,6 +119,8 @@ async function init() {
       });
     }
   });
+
+  // --- GitHub Token ---
 
   const config = await getConfig();
   const hasTokenError = await getTokenError();
@@ -109,11 +173,33 @@ async function init() {
     await setTokenError(false);
     patInput.value = "";
     patInput.placeholder = "ghp_...";
-    patStatus.textContent = "Token cleared — Sensible GitHub is disabled without a token";
+    patStatus.textContent = "Token cleared";
     patStatus.className = "pat-status error";
     updateTokenState(false, false);
 
     browser.runtime.sendMessage({ type: "configChanged" });
+  });
+
+  // --- Bot usernames ---
+
+  const botUsernames = await getBotUsernames();
+  botUsernamesTextarea.value = botUsernames.join("\n");
+
+  saveBotsBtn.addEventListener("click", async () => {
+    const lines = botUsernamesTextarea.value
+      .split("\n")
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0);
+    await setBotUsernames(lines);
+    botStatus.textContent = `Saved ${lines.length} usernames`;
+    botStatus.className = "bot-status success";
+  });
+
+  resetBotsBtn.addEventListener("click", async () => {
+    await resetBotUsernames();
+    botUsernamesTextarea.value = DEFAULT_BOT_USERNAMES.join("\n");
+    botStatus.textContent = "Reset to defaults";
+    botStatus.className = "bot-status success";
   });
 }
 

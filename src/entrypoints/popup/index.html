@@ -27,22 +27,46 @@
         font-size: 16px;
         font-weight: 600;
       }
-      .section {
-        padding: 12px 16px;
+      .feature-section {
         border-bottom: 1px solid #d0d7de;
       }
-      .section:last-child {
+      .feature-section:last-child {
         border-bottom: none;
+      }
+      .feature-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 16px;
+      }
+      .feature-name {
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .feature-desc {
+        font-size: 11px;
+        color: #656d76;
+        margin-top: 2px;
+      }
+      .feature-body {
+        padding: 0 16px 12px;
+      }
+      .feature-body[hidden] {
+        display: none;
       }
       .site-toggle {
         display: flex;
         align-items: center;
         justify-content: space-between;
+        padding: 8px 12px;
+        background: #f6f8fa;
+        border-radius: 6px;
+        margin-bottom: 8px;
       }
       .site-name {
-        font-size: 13px;
+        font-size: 12px;
         color: #656d76;
-        max-width: 200px;
+        max-width: 180px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -51,6 +75,7 @@
         position: relative;
         width: 40px;
         height: 22px;
+        flex-shrink: 0;
       }
       .toggle-switch input {
         opacity: 0;
@@ -88,7 +113,7 @@
       .warning {
         display: none;
         padding: 8px 12px;
-        margin: 8px 0;
+        margin-bottom: 8px;
         background: #fff8c5;
         border: 1px solid #d4a72c;
         border-radius: 6px;
@@ -98,15 +123,12 @@
       .warning.visible {
         display: block;
       }
-      .settings-section {
-        padding: 12px 16px;
-      }
       .settings-title {
         font-size: 12px;
         font-weight: 600;
         text-transform: uppercase;
         color: #656d76;
-        margin-bottom: 8px;
+        margin-bottom: 6px;
       }
       .pat-input-group {
         display: flex;
@@ -170,6 +192,40 @@
         font-size: 13px;
         color: #656d76;
         font-style: italic;
+        padding: 12px 16px;
+      }
+      .bot-textarea {
+        width: 100%;
+        min-height: 120px;
+        padding: 6px 8px;
+        border: 1px solid #d0d7de;
+        border-radius: 6px;
+        font-size: 12px;
+        font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+        resize: vertical;
+        margin-bottom: 8px;
+      }
+      .bot-textarea:focus {
+        outline: none;
+        border-color: #0969da;
+        box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.15);
+      }
+      .bot-btn-group {
+        display: flex;
+        gap: 8px;
+      }
+      .bot-status {
+        font-size: 12px;
+        color: #656d76;
+        margin-top: 4px;
+      }
+      .bot-status.success {
+        color: #1a7f37;
+      }
+      .bot-hint {
+        font-size: 11px;
+        color: #656d76;
+        margin-bottom: 6px;
       }
     </style>
   </head>
@@ -178,39 +234,87 @@
       <h1>Sensible GitHub</h1>
     </div>
 
-    <div class="section">
-      <div class="site-toggle">
+    <div id="notAvailable" class="not-available" style="display: none;">
+      Open a webpage to use Sensible GitHub
+    </div>
+
+    <!-- PR Info Tooltips -->
+    <div class="feature-section" id="prTooltipsSection">
+      <div class="feature-header">
         <div>
-          <div>Enable on this site</div>
-          <div class="site-name" id="siteName">-</div>
+          <div class="feature-name">PR Info Tooltips</div>
+          <div class="feature-desc">Show status icons and hover tooltips on PR links</div>
         </div>
         <label class="toggle-switch">
-          <input type="checkbox" id="siteToggle" checked />
+          <input type="checkbox" id="prTooltipsToggle" />
           <span class="toggle-slider"></span>
         </label>
       </div>
-    </div>
+      <div class="feature-body" id="prTooltipsBody" hidden>
+        <div class="site-toggle" id="siteToggleRow">
+          <div>
+            <div style="font-size: 13px;">Enable on this site</div>
+            <div class="site-name" id="siteName">-</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="siteToggle" checked />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
 
-    <div id="tokenRequired" class="warning visible">
-      A GitHub token is required. Add one below to enable Sensible GitHub.
-    </div>
+        <div id="tokenRequired" class="warning">
+          A GitHub token is required for PR tooltips.
+        </div>
+        <div id="tokenWarning" class="warning">
+          Your GitHub token appears to be invalid. Update it below.
+        </div>
 
-    <div id="tokenWarning" class="warning">
-      Your GitHub token appears to be invalid. Update it below.
-    </div>
-
-    <div class="settings-section">
-      <div class="settings-title">GitHub Token</div>
-      <div class="pat-input-group">
-        <input type="password" class="pat-input" id="patInput" placeholder="ghp_..." />
-        <button class="btn btn-primary" id="savePat">Save</button>
-        <button class="btn btn-danger" id="clearPat">Clear</button>
+        <div class="settings-title">GitHub Token</div>
+        <div class="pat-input-group">
+          <input type="password" class="pat-input" id="patInput" placeholder="ghp_..." />
+          <button class="btn btn-primary" id="savePat">Save</button>
+          <button class="btn btn-danger" id="clearPat">Clear</button>
+        </div>
+        <div class="pat-status" id="patStatus"></div>
       </div>
-      <div class="pat-status" id="patStatus"></div>
     </div>
 
-    <div id="notAvailable" class="section" style="display: none;">
-      <div class="not-available">Open a webpage to use Sensible GitHub</div>
+    <!-- Hide Bot Comments -->
+    <div class="feature-section" id="hideBotSection">
+      <div class="feature-header">
+        <div>
+          <div class="feature-name">Hide Bot Comments</div>
+          <div class="feature-desc">Collapse bot comments on PR pages</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="hideBotToggle" />
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="feature-body" id="hideBotBody" hidden>
+        <div class="settings-title">Bot Usernames</div>
+        <div class="bot-hint">One username per line. Names ending in [bot] are always detected.</div>
+        <textarea class="bot-textarea" id="botUsernames"></textarea>
+        <div class="bot-btn-group">
+          <button class="btn btn-primary" id="saveBots">Save</button>
+          <button class="btn" id="resetBots">Reset to Defaults</button>
+        </div>
+        <div class="bot-status" id="botStatus"></div>
+      </div>
+    </div>
+
+    <!-- PR Tab Title -->
+    <div class="feature-section" id="prTabTitleSection">
+      <div class="feature-header">
+        <div>
+          <div class="feature-name">PR Tab Title Prefix</div>
+          <div class="feature-desc">Show PR number in the browser tab title</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="prTabTitleToggle" />
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
     </div>
 
     <script type="module" src="./index.ts"></script>

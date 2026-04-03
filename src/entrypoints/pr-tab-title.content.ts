@@ -1,4 +1,5 @@
 import { parsePRUrl } from "@/utils/pr-url-parser";
+import { getPrTabTitleEnabled } from "@/services/storage";
 
 const THRASH_WINDOW_MS = 2000;
 const THRASH_MAX_ATTEMPTS = 5;
@@ -7,8 +8,9 @@ let lastTitleWeSet = "";
 let recentAttempts: number[] = [];
 let abandoned = false;
 
-function applyPrefix(): void {
+async function applyPrefix(): Promise<void> {
   if (abandoned) return;
+  if (!await getPrTabTitleEnabled()) return;
 
   const prLink = parsePRUrl(window.location.href);
   if (!prLink) return;

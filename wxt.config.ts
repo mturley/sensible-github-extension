@@ -5,7 +5,7 @@ export default defineConfig({
   manifest: {
     name: "Sensible GitHub",
     description:
-      "See GitHub PR status, reviews, and details inline on any website",
+      "Surface human PR comments, and see PR status and reviews inline on any website",
     permissions: ["activeTab", "storage"],
     host_permissions: ["https://api.github.com/*"],
     icons: {

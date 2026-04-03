@@ -5,17 +5,15 @@ import {
   setSiteEnabled,
   getTokenError,
   setTokenError,
-  getBotUsernames,
-  setBotUsernames,
-  resetBotUsernames,
   getPrTooltipsEnabled,
   setPrTooltipsEnabled,
   getHideBotsEnabled,
   setHideBotsEnabled,
+  getHideBotsDefault,
+  setHideBotsDefault,
   getPrTabTitleEnabled,
   setPrTabTitleEnabled,
 } from "@/services/storage";
-import { DEFAULT_BOT_USERNAMES } from "@/utils/bot-detection";
 
 // PR Tooltips elements
 const prTooltipsToggle = document.getElementById("prTooltipsToggle") as HTMLInputElement;
@@ -32,16 +30,12 @@ const patStatus = document.getElementById("patStatus") as HTMLDivElement;
 // Hide Bot Comments elements
 const hideBotToggle = document.getElementById("hideBotToggle") as HTMLInputElement;
 const hideBotBody = document.getElementById("hideBotBody") as HTMLDivElement;
-const botUsernamesTextarea = document.getElementById("botUsernames") as HTMLTextAreaElement;
-const saveBotsBtn = document.getElementById("saveBots") as HTMLButtonElement;
-const resetBotsBtn = document.getElementById("resetBots") as HTMLButtonElement;
-const botStatus = document.getElementById("botStatus") as HTMLDivElement;
+const hideBotDefaultToggle = document.getElementById("hideBotDefaultToggle") as HTMLInputElement;
 
 // PR Tab Title elements
 const prTabTitleToggle = document.getElementById("prTabTitleToggle") as HTMLInputElement;
 
-// Not available
-const notAvailable = document.getElementById("notAvailable") as HTMLDivElement;
+const siteToggleRow = document.getElementById("siteToggleRow") as HTMLLabelElement;
 
 let currentHostname: string | null = null;
 
@@ -57,22 +51,23 @@ function updateFeatureBody(toggle: HTMLInputElement, body: HTMLDivElement) {
 async function init() {
   const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
   const url = tab?.url;
+  let siteAvailable = false;
 
-  if (!url || url.startsWith("chrome://") || url.startsWith("about:")) {
-    notAvailable.style.display = "block";
-    document.getElementById("prTooltipsSection")!.style.display = "none";
-    document.getElementById("hideBotSection")!.style.display = "none";
-    document.getElementById("prTabTitleSection")!.style.display = "none";
-    return;
+  if (url && !url.startsWith("chrome://") && !url.startsWith("about:")) {
+    try {
+      const parsed = new URL(url);
+      if (parsed.hostname !== "github.com" && parsed.hostname !== "localhost") {
+        currentHostname = parsed.hostname;
+        siteNameEl.textContent = currentHostname;
+        siteAvailable = true;
+      }
+    } catch {
+      // not a valid URL, leave site toggle disabled
+    }
   }
 
-  try {
-    const parsed = new URL(url);
-    currentHostname = parsed.hostname;
-    siteNameEl.textContent = currentHostname;
-  } catch {
-    notAvailable.style.display = "block";
-    return;
+  if (!siteAvailable) {
+    siteToggleRow.style.display = "none";
   }
 
   // --- Feature toggles ---
@@ -96,6 +91,13 @@ async function init() {
     updateFeatureBody(hideBotToggle, hideBotBody);
   });
 
+  const hideBotsDefault = await getHideBotsDefault();
+  hideBotDefaultToggle.checked = hideBotsDefault;
+
+  hideBotDefaultToggle.addEventListener("change", async () => {
+    await setHideBotsDefault(hideBotDefaultToggle.checked);
+  });
+
   const prTabTitleEnabled = await getPrTabTitleEnabled();
   prTabTitleToggle.checked = prTabTitleEnabled;
 
@@ -105,20 +107,22 @@ async function init() {
 
   // --- Site toggle (PR Tooltips) ---
 
-  const enabled = await isSiteEnabled(currentHostname);
-  siteToggle.checked = enabled;
+  if (siteAvailable && currentHostname) {
+    const enabled = await isSiteEnabled(currentHostname);
+    siteToggle.checked = enabled;
 
-  siteToggle.addEventListener("change", async () => {
-    if (!currentHostname) return;
-    await setSiteEnabled(currentHostname, siteToggle.checked);
+    siteToggle.addEventListener("change", async () => {
+      if (!currentHostname) return;
+      await setSiteEnabled(currentHostname, siteToggle.checked);
 
-    const [activeTab] = await browser.tabs.query({ active: true, currentWindow: true });
-    if (activeTab?.id) {
-      browser.tabs.sendMessage(activeTab.id, {
-        type: siteToggle.checked ? "siteEnabled" : "siteDisabled",
-      });
-    }
-  });
+      const [activeTab] = await browser.tabs.query({ active: true, currentWindow: true });
+      if (activeTab?.id) {
+        browser.tabs.sendMessage(activeTab.id, {
+          type: siteToggle.checked ? "siteEnabled" : "siteDisabled",
+        });
+      }
+    });
+  }
 
   // --- GitHub Token ---
 
@@ -180,27 +184,6 @@ async function init() {
     browser.runtime.sendMessage({ type: "configChanged" });
   });
 
-  // --- Bot usernames ---
-
-  const botUsernames = await getBotUsernames();
-  botUsernamesTextarea.value = botUsernames.join("\n");
-
-  saveBotsBtn.addEventListener("click", async () => {
-    const lines = botUsernamesTextarea.value
-      .split("\n")
-      .map((l) => l.trim())
-      .filter((l) => l.length > 0);
-    await setBotUsernames(lines);
-    botStatus.textContent = `Saved ${lines.length} usernames`;
-    botStatus.className = "bot-status success";
-  });
-
-  resetBotsBtn.addEventListener("click", async () => {
-    await resetBotUsernames();
-    botUsernamesTextarea.value = DEFAULT_BOT_USERNAMES.join("\n");
-    botStatus.textContent = "Reset to defaults";
-    botStatus.className = "bot-status success";
-  });
 }
 
 init();

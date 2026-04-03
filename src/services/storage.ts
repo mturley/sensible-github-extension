@@ -75,33 +75,27 @@ export async function getTokenError(): Promise<boolean> {
   }
 }
 
-// --- Bot usernames ---
+// --- Hide bot comments ---
 
-const BOT_USERNAMES_KEY = "sensible_bot_usernames";
 const HIDE_BOTS_KEY = "sensible_hide_bots";
-
-import { DEFAULT_BOT_USERNAMES } from "@/utils/bot-detection";
-
-export async function getBotUsernames(): Promise<string[]> {
-  const result = await storage.getItem<string>(`local:${BOT_USERNAMES_KEY}`);
-  if (!result) return [...DEFAULT_BOT_USERNAMES];
-  try {
-    return JSON.parse(result);
-  } catch {
-    return [...DEFAULT_BOT_USERNAMES];
-  }
-}
-
-export async function setBotUsernames(usernames: string[]): Promise<void> {
-  await storage.setItem(`local:${BOT_USERNAMES_KEY}`, JSON.stringify(usernames));
-}
-
-export async function resetBotUsernames(): Promise<void> {
-  await storage.removeItem(`local:${BOT_USERNAMES_KEY}`);
-}
+const HIDE_BOTS_DEFAULT_KEY = "sensible_hide_bots_default";
 
 export async function getHideBotsEnabled(): Promise<boolean> {
   const result = await storage.getItem<string>(`local:${HIDE_BOTS_KEY}`);
+  if (!result) return true; // default enabled
+  try {
+    return JSON.parse(result);
+  } catch {
+    return true;
+  }
+}
+
+export async function setHideBotsEnabled(enabled: boolean): Promise<void> {
+  await storage.setItem(`local:${HIDE_BOTS_KEY}`, JSON.stringify(enabled));
+}
+
+export async function getHideBotsDefault(): Promise<boolean> {
+  const result = await storage.getItem<string>(`local:${HIDE_BOTS_DEFAULT_KEY}`);
   if (!result) return false;
   try {
     return JSON.parse(result);
@@ -110,8 +104,8 @@ export async function getHideBotsEnabled(): Promise<boolean> {
   }
 }
 
-export async function setHideBotsEnabled(enabled: boolean): Promise<void> {
-  await storage.setItem(`local:${HIDE_BOTS_KEY}`, JSON.stringify(enabled));
+export async function setHideBotsDefault(enabled: boolean): Promise<void> {
+  await storage.setItem(`local:${HIDE_BOTS_DEFAULT_KEY}`, JSON.stringify(enabled));
 }
 
 // --- Feature toggles ---

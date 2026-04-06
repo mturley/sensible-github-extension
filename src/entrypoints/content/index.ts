@@ -2,8 +2,9 @@ import type { PRData, BackgroundMessage, BackgroundResponse } from "@/services/g
 import type { TooltipState } from "./tooltip";
 import { findPRLinks, prCacheKey } from "@/utils/pr-url-parser";
 import { injectLoadingIcon, updateIcon, removeAllIcons, hasExistingNearbyIcon, cleanupOrphanedIcons } from "./icon-injector";
+import { injectCopyLink, removeAllCopyLinks, cleanupOrphanedCopyLinks } from "./copy-link-injector";
 import { setupTooltipListeners, updateTooltipContent, hideActiveTooltip } from "./tooltip";
-import { getPrTooltipsEnabled } from "@/services/storage";
+import { getPrTooltipsEnabled, getCopyLinkEnabled } from "@/services/storage";
 
 const HOVER_REVALIDATE_TTL = 60_000; // 1 minute
 
@@ -103,12 +104,17 @@ async function revalidateOnHover(owner: string, repo: string, number: number): P
 }
 
 async function processAnchors(root: Element | Document): Promise<void> {
-  if (!await getPrTooltipsEnabled()) return;
+  const prTooltipsEnabled = await getPrTooltipsEnabled();
+  const copyLinkEnabled = await getCopyLinkEnabled();
+
+  if (!prTooltipsEnabled && !copyLinkEnabled) return;
 
   const links = findPRLinks(root);
   if (links.length === 0) return;
 
-  await checkToken();
+  if (prTooltipsEnabled) {
+    await checkToken();
+  }
 
   for (const { element, link } of links) {
     if (processed.has(element)) continue;
@@ -116,27 +122,33 @@ async function processAnchors(root: Element | Document): Promise<void> {
 
     const key = prCacheKey(link.owner, link.repo, link.number);
 
-    if (!prHosts.has(key)) {
-      prHosts.set(key, []);
-    }
-
-    if (!hasExistingNearbyIcon(element)) {
-      const host = injectLoadingIcon(element);
-      prHosts.get(key)!.push(host);
-
-      const cached = prDataCache.get(key);
-      if (cached) {
-        updateIcon(host, cached);
-      } else if (hasToken && !pendingRequests.has(key)) {
-        fetchAndDecorate(link.owner, link.repo, link.number, prHosts.get(key)!);
+    if (prTooltipsEnabled) {
+      if (!prHosts.has(key)) {
+        prHosts.set(key, []);
       }
+
+      if (!hasExistingNearbyIcon(element)) {
+        const host = injectLoadingIcon(element);
+        prHosts.get(key)!.push(host);
+
+        const cached = prDataCache.get(key);
+        if (cached) {
+          updateIcon(host, cached);
+        } else if (hasToken && !pendingRequests.has(key)) {
+          fetchAndDecorate(link.owner, link.repo, link.number, prHosts.get(key)!);
+        }
+      }
+
+      setupTooltipListeners(
+        element,
+        () => getTooltipState(key),
+        () => revalidateOnHover(link.owner, link.repo, link.number)
+      );
     }
 
-    setupTooltipListeners(
-      element,
-      () => getTooltipState(key),
-      () => revalidateOnHover(link.owner, link.repo, link.number)
-    );
+    if (copyLinkEnabled) {
+      injectCopyLink(element);
+    }
   }
 }
 
@@ -146,9 +158,15 @@ function observeMutations(): void {
       for (const node of mutation.removedNodes) {
         if (node instanceof HTMLElement) {
           cleanupOrphanedIcons(node);
+          cleanupOrphanedCopyLinks(node);
           if (node.dataset?.prinfoIconId) {
             const iconId = node.dataset.prinfoIconId;
             document.getElementById(iconId)?.remove();
+            processed.delete(node as HTMLAnchorElement);
+          }
+          if (node.dataset?.prinfoCopyId) {
+            const copyId = node.dataset.prinfoCopyId;
+            document.getElementById(copyId)?.remove();
             processed.delete(node as HTMLAnchorElement);
           }
         }
@@ -170,10 +188,11 @@ function observeMutations(): void {
 
 function handleContentEditableChange(target: HTMLElement): void {
   if (target.isContentEditable) {
-    // Became editable — remove all injected icons and un-track anchors
+    // Became editable — remove all injected icons/copy links and un-track anchors
     hideActiveTooltip();
     cleanupOrphanedIcons(target);
-    target.querySelectorAll<HTMLAnchorElement>("a[data-prinfo-icon-id]").forEach((anchor) => {
+    cleanupOrphanedCopyLinks(target);
+    target.querySelectorAll<HTMLAnchorElement>("a[data-prinfo-icon-id], a[data-prinfo-copy-id]").forEach((anchor) => {
       processed.delete(anchor);
     });
   } else {
@@ -193,6 +212,7 @@ export default defineContentScript({
       if (message.type === "siteDisabled") {
         hideActiveTooltip();
         removeAllIcons();
+        removeAllCopyLinks();
         processed.clear();
         prHosts.clear();
         prDataCache.clear();
@@ -205,12 +225,22 @@ export default defineContentScript({
         hasToken = null;
         processed.clear();
         prErrors.clear();
-        getPrTooltipsEnabled().then((enabled) => {
-          if (enabled) {
+        Promise.all([getPrTooltipsEnabled(), getCopyLinkEnabled()]).then(([tooltipsEnabled, copyEnabled]) => {
+          if (tooltipsEnabled || copyEnabled) {
+            if (!tooltipsEnabled) {
+              hideActiveTooltip();
+              removeAllIcons();
+              prHosts.clear();
+              prDataCache.clear();
+            }
+            if (!copyEnabled) {
+              removeAllCopyLinks();
+            }
             processAnchors(document);
           } else {
             hideActiveTooltip();
             removeAllIcons();
+            removeAllCopyLinks();
             prHosts.clear();
             prDataCache.clear();
           }

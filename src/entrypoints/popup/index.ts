@@ -13,6 +13,8 @@ import {
   setHideBotsDefault,
   getPrTabTitleEnabled,
   setPrTabTitleEnabled,
+  getCopyLinkEnabled,
+  setCopyLinkEnabled,
 } from "@/services/storage";
 
 // PR Tooltips elements
@@ -31,6 +33,9 @@ const patStatus = document.getElementById("patStatus") as HTMLDivElement;
 const hideBotToggle = document.getElementById("hideBotToggle") as HTMLInputElement;
 const hideBotBody = document.getElementById("hideBotBody") as HTMLDivElement;
 const hideBotDefaultToggle = document.getElementById("hideBotDefaultToggle") as HTMLInputElement;
+
+// Copy PR Link elements
+const copyLinkToggle = document.getElementById("copyLinkToggle") as HTMLInputElement;
 
 // PR Tab Title elements
 const prTabTitleToggle = document.getElementById("prTabTitleToggle") as HTMLInputElement;
@@ -96,6 +101,14 @@ async function init() {
 
   hideBotDefaultToggle.addEventListener("change", async () => {
     await setHideBotsDefault(hideBotDefaultToggle.checked);
+  });
+
+  const copyLinkEnabled = await getCopyLinkEnabled();
+  copyLinkToggle.checked = copyLinkEnabled;
+
+  copyLinkToggle.addEventListener("change", async () => {
+    await setCopyLinkEnabled(copyLinkToggle.checked);
+    browser.runtime.sendMessage({ type: "configChanged" });
   });
 
   const prTabTitleEnabled = await getPrTabTitleEnabled();

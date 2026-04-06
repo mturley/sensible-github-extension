@@ -140,3 +140,19 @@ export async function getPrTabTitleEnabled(): Promise<boolean> {
 export async function setPrTabTitleEnabled(enabled: boolean): Promise<void> {
   await storage.setItem(`local:${PR_TAB_TITLE_KEY}`, JSON.stringify(enabled));
 }
+
+const COPY_LINK_KEY = "sensible_copy_link_enabled";
+
+export async function getCopyLinkEnabled(): Promise<boolean> {
+  const result = await storage.getItem<string>(`local:${COPY_LINK_KEY}`);
+  if (!result) return true; // default enabled
+  try {
+    return JSON.parse(result);
+  } catch {
+    return true;
+  }
+}
+
+export async function setCopyLinkEnabled(enabled: boolean): Promise<void> {
+  await storage.setItem(`local:${COPY_LINK_KEY}`, JSON.stringify(enabled));
+}

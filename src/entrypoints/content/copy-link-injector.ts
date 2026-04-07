@@ -14,6 +14,7 @@ const COPY_STYLES = `
     margin-left: 4px;
     vertical-align: middle;
     line-height: 0;
+    position: relative;
   }
   .copy-link-btn {
     display: inline-flex;
@@ -31,6 +32,34 @@ const COPY_STYLES = `
   }
   .copy-link-btn.copied {
     color: #1a7f37;
+  }
+  .copy-tooltip {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1f2328;
+    color: #ffffff;
+    font-size: 11px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    padding: 4px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 1;
+    transition: opacity 0.2s;
+  }
+  .copy-tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 4px solid transparent;
+    border-top-color: #1f2328;
+  }
+  .copy-tooltip.fade-out {
+    opacity: 0;
   }
 `;
 
@@ -61,11 +90,22 @@ export function injectCopyLink(anchor: HTMLAnchorElement): HTMLElement | null {
     e.stopPropagation();
     navigator.clipboard.writeText(anchor.href).then(() => {
       btn.classList.add("copied");
-      btn.title = "Copied!";
+
+      // Remove any existing tooltip
+      shadow.querySelector(".copy-tooltip")?.remove();
+
+      const tooltip = document.createElement("span");
+      tooltip.className = "copy-tooltip";
+      tooltip.textContent = "Copied!";
+      shadow.appendChild(tooltip);
+
       setTimeout(() => {
+        tooltip.classList.add("fade-out");
+      }, 1000);
+      setTimeout(() => {
+        tooltip.remove();
         btn.classList.remove("copied");
-        btn.title = "Copy link";
-      }, 1500);
+      }, 1200);
     });
   });
   shadow.appendChild(btn);

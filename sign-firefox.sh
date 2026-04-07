@@ -48,6 +48,9 @@ esac
 if [[ "$new_version" != "$current_version" ]]; then
   npm version "$new_version" --no-git-tag-version
   echo "Updated package.json to version $new_version"
+  git add package.json package-lock.json
+  git commit --signoff -m "chore: bump version to $new_version"
+  echo "Committed version bump"
 else
   echo "Keeping version $current_version (retry)"
 fi

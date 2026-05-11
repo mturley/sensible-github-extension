@@ -49,11 +49,12 @@ function createLoadingPlaceholder(): string {
 
 const ICON_STYLES = `
   :host {
-    display: inline-flex;
+    display: inline-flex !important;
     align-items: center;
     margin-right: 4px;
     vertical-align: middle;
-    line-height: 0;
+    line-height: 1;
+    flex-shrink: 0;
   }
   .prinfo-icon {
     display: inline-flex;
@@ -74,6 +75,10 @@ export function injectLoadingIcon(anchor: HTMLAnchorElement): HTMLElement {
   host.id = hostId;
   anchor.dataset.prinfoIconId = hostId;
   host.className = ICON_CLASS;
+
+  // Set inline style to ensure proper display in any parent context
+  host.style.cssText = 'display: inline-flex; vertical-align: middle;';
+
   const shadow = host.attachShadow({ mode: "open" });
 
   const style = document.createElement("style");
@@ -85,7 +90,15 @@ export function injectLoadingIcon(anchor: HTMLAnchorElement): HTMLElement {
   container.innerHTML = createLoadingPlaceholder();
   shadow.appendChild(container);
 
-  anchor.prepend(host);
+  // Find the text container (like .se-link-title) or fall back to anchor
+  const textContainer = anchor.querySelector('div, span:not(.prinfo-icon-host):not(.prinfo-copy-host)');
+  if (textContainer && textContainer.childNodes.length > 0) {
+    // Prepend to the text container to appear before the text
+    textContainer.prepend(host);
+  } else {
+    // Fall back to prepending to anchor
+    anchor.prepend(host);
+  }
   return host;
 }
 

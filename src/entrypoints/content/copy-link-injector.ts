@@ -9,12 +9,13 @@ function createLinkSvg(): string {
 
 const COPY_STYLES = `
   :host {
-    display: inline-flex;
+    display: inline-flex !important;
     align-items: center;
     margin-left: 4px;
     vertical-align: middle;
-    line-height: 0;
+    line-height: 1;
     position: relative;
+    flex-shrink: 0;
   }
   .copy-link-btn {
     display: inline-flex;
@@ -75,6 +76,10 @@ export function injectCopyLink(anchor: HTMLAnchorElement): HTMLElement | null {
   host.id = hostId;
   anchor.dataset.prinfoCopyId = hostId;
   host.className = COPY_CLASS;
+
+  // Set inline style to ensure proper display in any parent context
+  host.style.cssText = 'display: inline-flex; vertical-align: middle;';
+
   const shadow = host.attachShadow({ mode: "open" });
 
   const style = document.createElement("style");
@@ -110,8 +115,15 @@ export function injectCopyLink(anchor: HTMLAnchorElement): HTMLElement | null {
   });
   shadow.appendChild(btn);
 
-  // Insert after the anchor
-  anchor.after(host);
+  // Find the text container (like .se-link-title) or fall back to anchor
+  const textContainer = anchor.querySelector('div, span:not(.prinfo-icon-host):not(.prinfo-copy-host)');
+  if (textContainer && textContainer.childNodes.length > 0) {
+    // Append to the text container to appear after the text
+    textContainer.appendChild(host);
+  } else {
+    // Fall back to appending to anchor
+    anchor.appendChild(host);
+  }
   return host;
 }
 

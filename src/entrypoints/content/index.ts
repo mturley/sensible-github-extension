@@ -147,7 +147,10 @@ async function processAnchors(root: Element | Document): Promise<void> {
     }
 
     if (copyLinkEnabled) {
-      injectCopyLink(element);
+      // Skip copy button if inside an se-link-group (sensible-slack-extension already provides copy buttons)
+      if (!element.closest('.se-link-group')) {
+        injectCopyLink(element);
+      }
     }
   }
 }

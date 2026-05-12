@@ -229,21 +229,39 @@ function positionTooltip(host: HTMLElement, anchorRect: DOMRect): void {
   const tooltipWidth = 420;
   const tooltipHeight = 300;
 
-  let left = anchorRect.left;
-  let top = anchorRect.bottom + padding;
+  let left: number;
+  let top: number;
 
-  if (left + tooltipWidth > window.innerWidth) {
-    left = window.innerWidth - tooltipWidth - padding;
-  }
-  if (left < padding) {
-    left = padding;
+  const spaceRight = window.innerWidth - anchorRect.right;
+  const spaceLeft = anchorRect.left;
+
+  if (spaceRight >= tooltipWidth + padding) {
+    left = anchorRect.right + padding;
+    top = anchorRect.top;
+  } else if (spaceLeft >= tooltipWidth + padding) {
+    left = anchorRect.left - tooltipWidth - padding;
+    top = anchorRect.top;
+  } else {
+    left = anchorRect.left;
+    top = anchorRect.bottom + padding;
+
+    if (left + tooltipWidth > window.innerWidth) {
+      left = window.innerWidth - tooltipWidth - padding;
+    }
+    if (left < padding) {
+      left = padding;
+    }
+
+    if (top + tooltipHeight > window.innerHeight) {
+      top = anchorRect.top - tooltipHeight - padding;
+    }
   }
 
   if (top + tooltipHeight > window.innerHeight) {
-    top = anchorRect.top - tooltipHeight - padding;
-    if (top < padding) {
-      top = padding;
-    }
+    top = window.innerHeight - tooltipHeight - padding;
+  }
+  if (top < padding) {
+    top = padding;
   }
 
   host.style.left = `${left}px`;

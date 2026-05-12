@@ -1,6 +1,6 @@
 {
   "name": "sensible-github-extension",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "private": true,
   "description": "Browser extension that surfaces GitHub PR info inline on other websites",
   "type": "module",

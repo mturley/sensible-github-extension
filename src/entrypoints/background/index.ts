@@ -5,7 +5,7 @@ import type {
 } from "@/services/github/types";
 import { createClient } from "@/services/github/client";
 import { getRateLimitState } from "@/services/github/graphql-client";
-import { getCached, setCached, isFreshForPageLoad } from "@/services/cache";
+import { getCached, setCached, isFreshForPageLoad, startEviction } from "@/services/cache";
 import {
   getConfig,
   setSiteEnabled,
@@ -73,6 +73,8 @@ async function fetchPR(
 }
 
 export default defineBackground(() => {
+  startEviction();
+
   browser.runtime.onMessage.addListener(
     (
       message: BackgroundMessage,

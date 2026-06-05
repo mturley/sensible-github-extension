@@ -43,4 +43,6 @@ function evictStaleEntries(): void {
   }
 }
 
-setInterval(evictStaleEntries, 30 * 60 * 1000);
+export function startEviction(): void {
+  setInterval(evictStaleEntries, 30 * 60 * 1000);
+}

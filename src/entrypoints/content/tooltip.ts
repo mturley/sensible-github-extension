@@ -1,5 +1,5 @@
 import type { PRData, ReviewEntry } from "@/services/github/types";
-import { relativeTime } from "@/utils/relative-time";
+import { relativeTime, relativeTimeFromTimestamp } from "@/utils/relative-time";
 import { latestReviewPerReviewer } from "@/services/review-staleness";
 
 const TOOLTIP_CLASS = "prinfo-tooltip-host";
@@ -182,11 +182,14 @@ function renderTooltipContent(data: PRData): string {
   html += `<div class="tooltip-title">${escapeHtml(data.title)} <span class="tooltip-number">#${data.number}</span></div>`;
 
   // Meta
+  const fetchAge = Date.now() - data.fetchedAt;
+  const fetchColor = fetchAge > 60 * 60 * 1000 ? "#bf8700" : "#8b949e";
   html += `<div class="tooltip-meta">
     <span>${escapeHtml(data.owner)}/${escapeHtml(data.repo)}</span>
     <span>by ${escapeHtml(data.author)}</span>
     <span>opened ${relativeTime(data.createdAt)}</span>
     <span>updated ${relativeTime(data.updatedAt)}</span>
+    <span style="color:${fetchColor}">fetched ${relativeTimeFromTimestamp(data.fetchedAt)}</span>
   </div>`;
 
   // Reviews

@@ -6,7 +6,7 @@ import { injectCopyLink, removeAllCopyLinks, cleanupOrphanedCopyLinks } from "./
 import { setupTooltipListeners, updateTooltipContent, hideActiveTooltip } from "./tooltip";
 import { getPrTooltipsEnabled, getCopyLinkEnabled } from "@/services/storage";
 
-const HOVER_REVALIDATE_TTL = 60_000; // 1 minute
+const HOVER_REVALIDATE_TTL = 300_000; // 5 minutes
 
 const processed = new Set<HTMLAnchorElement>();
 const prHosts = new Map<string, HTMLElement[]>();
@@ -210,6 +210,15 @@ export default defineContentScript({
   async main() {
     await processAnchors(document);
     observeMutations();
+
+    setInterval(() => {
+      const now = Date.now();
+      for (const [key, data] of prDataCache) {
+        if (now - data.fetchedAt > 24 * 60 * 60 * 1000) {
+          prDataCache.delete(key);
+        }
+      }
+    }, 30 * 60 * 1000);
 
     browser.runtime.onMessage.addListener((message: { type: string }) => {
       if (message.type === "siteDisabled") {

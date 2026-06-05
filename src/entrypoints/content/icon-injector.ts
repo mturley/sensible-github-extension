@@ -1,6 +1,7 @@
 import type { PRData } from "@/services/github/types";
 
 const ICON_CLASS = "prinfo-icon-host";
+const STALE_DATA_THRESHOLD = 60 * 60 * 1000; // 1 hour
 
 const STATE_COLORS: Record<PRData["state"], string> = {
   open: "#1a7f37",
@@ -60,6 +61,7 @@ const ICON_STYLES = `
     display: inline-flex;
     align-items: center;
     cursor: default;
+    transition: opacity 0.2s;
   }
 `;
 
@@ -110,6 +112,9 @@ export function updateIcon(host: HTMLElement, data: PRData): void {
   if (!container) return;
 
   container.innerHTML = createSvgIcon(data.state, data.isDraft);
+
+  const isStale = Date.now() - data.fetchedAt > STALE_DATA_THRESHOLD;
+  (container as HTMLElement).style.opacity = isStale ? "0.5" : "1";
 }
 
 export function removeIcon(host: HTMLElement): void {

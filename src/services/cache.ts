@@ -2,7 +2,7 @@ import type { PRData, CacheEntry } from "@/services/github/types";
 import { prCacheKey } from "@/utils/pr-url-parser";
 
 const PAGE_LOAD_TTL = 5 * 60 * 1000; // 5 minutes
-const HOVER_REVALIDATE_TTL = 1 * 60 * 1000; // 1 minute
+const HOVER_REVALIDATE_TTL = 5 * 60 * 1000; // 5 minutes
 
 const cache = new Map<string, CacheEntry>();
 
@@ -31,3 +31,16 @@ export function needsHoverRevalidation(entry: CacheEntry): boolean {
 export function clearCache(): void {
   cache.clear();
 }
+
+const EVICTION_MAX_AGE = 24 * 60 * 60 * 1000; // 24 hours
+
+function evictStaleEntries(): void {
+  const now = Date.now();
+  for (const [key, entry] of cache) {
+    if (now - entry.fetchedAt > EVICTION_MAX_AGE) {
+      cache.delete(key);
+    }
+  }
+}
+
+setInterval(evictStaleEntries, 30 * 60 * 1000);

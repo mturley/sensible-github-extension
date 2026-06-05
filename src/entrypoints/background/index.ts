@@ -4,6 +4,7 @@ import type {
   PRData,
 } from "@/services/github/types";
 import { createClient } from "@/services/github/client";
+import { getRateLimitState } from "@/services/github/graphql-client";
 import { getCached, setCached, isFreshForPageLoad } from "@/services/cache";
 import {
   getConfig,
@@ -43,6 +44,12 @@ async function fetchPR(
 
   const promise = (async () => {
     try {
+      const { remaining } = getRateLimitState();
+      if (remaining !== null && remaining < 500) {
+        const stale = getCached(owner, repo, number);
+        if (stale) return stale.data;
+      }
+
       await throttle();
       const client = await createClient();
       const data = await client.fetchPR(owner, repo, number);

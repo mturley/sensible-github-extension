@@ -4,6 +4,13 @@ import { truncateToLines } from "@/utils/relative-time";
 
 const GRAPHQL_URL = "https://api.github.com/graphql";
 
+let rateLimitRemaining: number | null = null;
+let rateLimitReset: number | null = null;
+
+export function getRateLimitState(): { remaining: number | null; resetAt: number | null } {
+  return { remaining: rateLimitRemaining, resetAt: rateLimitReset };
+}
+
 interface GQLPullRequest {
   number: number;
   title: string;
@@ -58,6 +65,11 @@ export class GraphQLClient implements GitHubClient {
         variables: { owner, repo, number },
       }),
     });
+
+    const remaining = response.headers.get("X-RateLimit-Remaining");
+    const reset = response.headers.get("X-RateLimit-Reset");
+    if (remaining !== null) rateLimitRemaining = parseInt(remaining, 10);
+    if (reset !== null) rateLimitReset = parseInt(reset, 10);
 
     if (!response.ok) {
       throw new Error(`GitHub GraphQL error: ${response.status}`);

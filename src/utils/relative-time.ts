@@ -5,6 +5,10 @@ const WEEK = 604_800_000;
 const MONTH = 2_592_000_000;
 const YEAR = 31_536_000_000;
 
+export function relativeTimeFromTimestamp(timestamp: number): string {
+  return relativeTime(new Date(timestamp).toISOString());
+}
+
 export function relativeTime(dateString: string): string {
   const date = new Date(dateString);
   const now = Date.now();
